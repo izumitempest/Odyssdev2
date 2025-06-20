@@ -12,6 +12,7 @@ from google.auth.transport import requests as google_requests
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
+
 @auth_bp.route("/oauth/google", methods=["POST"])
 def google_oauth():
     data = request.get_json()
@@ -51,8 +52,8 @@ def google_oauth():
             db.session.add(identity)
 
         db.session.commit()
+        tokens = generate_tokens(user)  # ✅ user is the full SQLAlchemy object
 
-        tokens = generate_tokens({"id": user.id, "email": user.email})
         return jsonify(tokens), 200
 
     except Exception as e:
@@ -86,7 +87,8 @@ def login():
     if not user or not verify_password(password, user.password_hash):
         return jsonify({"error": "Invalid credentials"}), 401
 
-    tokens = generate_tokens({"id": user.id, "email": user.email})
+    tokens = generate_tokens(user)  # ✅ user is the full SQLAlchemy object
+
     return jsonify(tokens), 200
 
 
