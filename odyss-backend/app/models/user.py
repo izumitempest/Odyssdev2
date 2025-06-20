@@ -13,7 +13,7 @@ class User(db.Model):
     name = db.Column(db.String(100), nullable=True)
     avatar = db.Column(db.String(255), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    roles = db.relationship("Role", secondary="user_roles", backref="users")
+    # roles = db.relationship("Role", secondary="user_roles", backref="users")
 
 
     # OAuth identities
