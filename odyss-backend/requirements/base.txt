@@ -5,3 +5,4 @@ Flask-Cors
 Flask-Migrate
 psycopg2-binary
 python-dotenv
+google-auth
