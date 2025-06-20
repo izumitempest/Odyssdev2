@@ -3,15 +3,19 @@ from flask import Flask
 from app.config import Config
 from app.extensions import db, jwt, migrate, cors
 from app.auth.routes import auth_bp
-
+from app.users.routes import user_bp
+from app.trips.routes import trips_bp
 
 
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
     app.register_blueprint(auth_bp)
+    app.register_blueprint(user_bp)
+    app.register_blueprint(trips_bp)
 
     # Register extensions
+
     db.init_app(app)
     jwt.init_app(app)
     migrate.init_app(app, db)
