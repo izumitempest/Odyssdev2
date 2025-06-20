@@ -4,7 +4,7 @@ from functools import wraps
 from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
 from flask import jsonify
 from app.models.user import User
-from app.models.role import Role  # Assuming role model exists
+# from app.models.role import Role  # Assuming role model exists
 
 def jwt_required_guard(fn):
     @wraps(fn)
