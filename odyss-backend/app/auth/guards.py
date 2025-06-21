@@ -4,6 +4,8 @@ from functools import wraps
 from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
 from flask import jsonify
 from app.models.user import User
+from app.extensions import db
+
 # from app.models.role import Role  # Assuming role model exists
 
 def jwt_required_guard(fn):
@@ -17,25 +19,21 @@ def jwt_required_guard(fn):
     return wrapper
 
 
-def role_required(required_roles):
-    if isinstance(required_roles, str):
-        required_roles = [required_roles]
-
-    def decorator(fn):
+def role_required(*roles):
+    def wrapper(fn):
         @wraps(fn)
-        def wrapper(*args, **kwargs):
+        def decorator(*args, **kwargs):
             verify_jwt_in_request()
-            identity = get_jwt_identity()
-            user = User.query.get(identity["id"])
-
-            user_roles = [r.name for r in user.roles] if user and hasattr(user, "roles") else []
-            if not any(role in user_roles for role in required_roles):
-                return jsonify({"error": "Forbidden: insufficient role"}), 403
-
+            user_id = get_jwt_identity()
+            user = db.session.get(User, user_id)
+            if user is None or user.role not in roles:
+                return jsonify({"message": "Unauthorized"}), 403
             return fn(*args, **kwargs)
-        return wrapper
-    return decorator
+        return decorator
+    return wrapper
 
+admin_required = role_required("admin")
+driver_required = role_required("driver")
 
 def same_user_or_admin(user_id_key="user_id"):
     def decorator(fn):
