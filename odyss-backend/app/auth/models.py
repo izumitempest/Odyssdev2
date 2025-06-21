@@ -1,13 +1,14 @@
-# models.py
-# app/auth/models.py
+import uuid  # if not already imported
 from app.extensions import db
-import uuid
+from sqlalchemy.orm import relationship
 
 class OAuthIdentity(db.Model):
     __tablename__ = 'oauth_identities'
-    id = db.Column(db.String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    provider = db.Column(db.String(50), nullable=False)  # e.g., 'google'
-    provider_user_id = db.Column(db.String(255), nullable=False)  # e.g., Google sub
-    user_id = db.Column(db.String, db.ForeignKey('users.id'), nullable=False)
 
-    user = db.relationship("User", back_populates="oauth_identities", lazy=True)
+    id = db.Column(db.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = db.Column(db.UUID(as_uuid=True), db.ForeignKey('users.id'), nullable=False)
+
+    provider = db.Column(db.String(50), nullable=False)
+    provider_user_id = db.Column(db.String(120), nullable=False)
+    access_token = db.Column(db.String, nullable=True)
+    user = relationship("User", back_populates="oauth_identities")
