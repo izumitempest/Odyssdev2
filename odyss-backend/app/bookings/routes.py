@@ -4,6 +4,7 @@ from app.extensions import db
 from app.models.booking import Booking
 from app.auth.guards import admin_required, driver_required
 from app.bookings.repositories import get_passengers_by_trip as list_passengers_for_trip
+
 from app.models.trip import Trip
 from datetime import datetime
 import uuid
