@@ -1,14 +1,18 @@
 # user.py
 # app/models/user.py
 from app.extensions import db
+from sqlalchemy.dialects.postgresql import UUID
 import uuid
 from datetime import datetime
 from sqlalchemy.orm import relationship
+from app.models.role import Role
 
 class User(db.Model):
     __tablename__ = 'users'
 
     id = db.Column(db.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    role_id = db.Column(UUID(as_uuid=True), db.ForeignKey('roles.id'), nullable=True)
+    role = db.relationship("Role", back_populates="users")
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=True)  # null if OAuth-only
     name = db.Column(db.String(100), nullable=True)
