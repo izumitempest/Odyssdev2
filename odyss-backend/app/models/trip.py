@@ -1,6 +1,6 @@
 # trip.py
 # app/models/trip.py
-
+from sqlalchemy.dialects.postgresql import UUID
 import uuid
 from datetime import datetime
 from app.extensions import db
@@ -8,7 +8,7 @@ from app.extensions import db
 class Trip(db.Model):
     __tablename__ = "trips"
 
-    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     origin = db.Column(db.String(120), nullable=False)
     destination = db.Column(db.String(120), nullable=False)
     departure_time = db.Column(db.DateTime, nullable=False)
