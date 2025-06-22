@@ -108,5 +108,3 @@ def cancel_booking(booking_id):
 def get_trip_passengers(trip_id):
     passengers = list_passengers_for_trip(trip_id)
     return jsonify(passengers), 200
-
-
