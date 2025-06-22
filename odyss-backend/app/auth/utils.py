@@ -18,7 +18,7 @@ def generate_tokens(user):
     }
     access_token = create_access_token(
         identity=identity,
-        additional_claims=additional_claims,
+        additional_claims={},
         expires_delta=timedelta(hours=1)
     )
     refresh_token = create_refresh_token(identity=identity)
