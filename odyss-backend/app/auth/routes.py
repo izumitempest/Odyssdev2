@@ -13,10 +13,19 @@ from app.models.email_otp import EmailOTP
 from app.auth.utils import send_otp_email
 from werkzeug.security import generate_password_hash
 from app.utils.otp import generate_otp
-from datetime import datetime, timedelta
-
+from datetime import datetime, timedelta, timezone
+import re
+from flask import request, jsonify
+from app.services.otp_service import generate_and_store_otp
+from app.utils.email_sender import send_otp_email
+from werkzeug.security import generate_password_hash
+from app.models.user import User
+from app.models.role import Role
+from app.models.email_otp import EmailOTP
+from app.extensions import db
+from flask import request, jsonify
 # In-memory store for OTPs (for development/testing only)
-otp_store = {}
+
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
@@ -102,65 +111,63 @@ def request_otp():
     email = data.get("email")
 
     if not email:
-        return jsonify({"error": "Email is required"}), 400
+        return jsonify({"error": "Valid email is required"}), 400
 
-    otp = generate_otp()
-
-    otp_store[email] = {
-        "code": otp,
-        "expires_at": datetime.utcnow() + timedelta(minutes=10)
-    }
+    otp = generate_and_store_otp(email)
 
     print(f"📨 Sending OTP {otp} to {email}...")
 
     if not send_otp_email(email, otp):
-        print("❌ Failed to send email.")
-        return jsonify({"error": "Failed to send email"}), 500
+        return jsonify({"error": "Failed to send OTP email"}), 500
 
-    return jsonify({"message": "OTP sent to email"}), 200
+    return jsonify({"message": "OTP sent successfully"}), 200
+
 
 
 @auth_bp.route("/register", methods=["POST"])
 def register():
     data = request.get_json()
-    email = data.get("email")
-    password = data.get("password")
-
+    
     required_fields = ["first_name", "last_name", "nickname", "email", "password", "bio", "phone_number", "profile_pic", "intro_video"]
     if not all(field in data and data[field] for field in required_fields):
         return jsonify({"error": "Missing required fields"}), 400
 
-# Check if OTP exists for email
-    if EmailOTP.query.filter_by(email=data['email']).first():
+    email = data["email"]
+
+    # Check OTP (must NOT exist if deleted on verification)
+    if EmailOTP.query.filter_by(email=email).first():
         return jsonify({"error": "Email not verified"}), 400
 
-
+    # Check if user already exists
     if User.query.filter_by(email=email).first():
         return jsonify({"error": "Email already registered"}), 400
 
-    # Get the default role (not admin)
-    default_role = Role.query.filter_by(name="user").first()
-    if not default_role:
-        # Optionally, create the role if it doesn't exist
-        default_role = Role(name="user")
-        db.session.add(default_role)
+    # Fetch or create the default "user" role
+    role = Role.query.filter_by(name="user").first()
+    if not role:
+        role = Role(name="user")
+        db.session.add(role)
         db.session.commit()
-    
+
+    # Create new user (correctly map fields to model)
     user = User(
         first_name=data["first_name"],
         last_name=data["last_name"],
-        nickname=data["nickname"],
-        email=data["email"],
-        password=generate_password_hash(data["password"]),
+        name=data["nickname"],
+        email=email,
+        password_hash=generate_password_hash(data["password"]),
         bio=data["bio"],
         phone_number=data["phone_number"],
-        profile_pic=data["profile_pic"],
-        intro_video=data["intro_video"]
+        avatar=data["profile_pic"],
+        intro_video=data["intro_video"],
+        role=role
     )
+
     db.session.add(user)
     db.session.commit()
 
-    return jsonify({"message": "User registered successfully"}), 201    
+    return jsonify({"message": "User registered successfully"}), 201
+
     # user.role = default_role  # Assign the default role
     # db.session.add(user)
     # db.session.commit()
@@ -174,18 +181,36 @@ def login():
     email = data.get("email")
     password = data.get("password")
 
+    if not email or not password:
+        return jsonify({"error": "Email and password required"}), 400
+
     user = User.query.filter_by(email=email).first()
+    
     if not user or not verify_password(password, user.password_hash):
         return jsonify({"error": "Invalid credentials"}), 401
 
-    tokens = generate_tokens(user)  # user is the full SQLAlchemy object
+    tokens = generate_tokens(user)  # typically returns { access, refresh }
 
-    return jsonify(tokens), 200
-
+    return jsonify({
+        "message": "Login successful",
+        "tokens": tokens,
+        "user": {
+            "id": str(user.id),
+            "name": user.name,
+            "email": user.email,
+            "role": user.role.name if user.role else "user",
+            "avatar": user.avatar
+        }
+    }), 200
 
 @auth_bp.route("/token/refresh", methods=["POST"])
 @jwt_required(refresh=True)
 def refresh_token():
-    identity = get_jwt_identity()
-    new_token = generate_tokens(identity)
-    return jsonify(new_token), 200
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    tokens = generate_tokens(user)
+    return jsonify(tokens), 200

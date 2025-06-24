@@ -9,14 +9,23 @@ from app.trips.routes import trips_bp
 from app.bookings.routes import bookings_bp
 from app.bookings.routes import booking_bp
 from app.payments.routes import payments_bp
+# from app.companies.routes import companies_bp
 from flask_cors import CORS
-
+from flask_jwt_extended import JWTManager
+import os
+from datetime import timedelta
+from dotenv import load_dotenv
+load_dotenv()  # Load environment variables from .env file
 
 
 
 def create_app():
     app = Flask(__name__)
     CORS(app)
+    app.config["JWT_SECRET_KEY"] = os.getenv("SECRET_KEY")
+    app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=1)
+    app.config["JWT_REFRESH_TOKEN_EXPIRES"] = timedelta(days=7)
+
     app.config.from_object(Config)
     app.register_blueprint(auth_bp)
     app.register_blueprint(user_bp)
@@ -24,6 +33,8 @@ def create_app():
     app.register_blueprint(bookings_bp)
     app.register_blueprint(booking_bp)
     app.register_blueprint(payments_bp)
+    # app.register_blueprint(companies_bp)
+
     
 
     @app.after_request
@@ -41,6 +52,7 @@ def create_app():
     # Register extensions
 
     db.init_app(app)
+    jwt = JWTManager(app)
     jwt.init_app(app)
     migrate.init_app(app, db)
     cors.init_app(app)

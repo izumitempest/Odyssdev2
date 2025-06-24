@@ -17,7 +17,8 @@ class Config:
     PAYSTACK_SECRET_KEY = os.getenv("PAYSTACK_SECRET_KEY")
     PAYSTACK_PUBLIC_KEY = os.getenv("PAYSTACK_PUBLIC_KEY")
     SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
-    RESEND_API_KEY = os.getenv("RESEND_API_KEY")
+    EMAIL_FROM = os.getenv("EMAIL_FROM")
+    # RESEND_API_KEY = os.getenv("RESEND_API_KEY")
     # BREVO_API_KEY = os.getenv("BREVO_API_KEY")
     # BREVO_SENDER_EMAIL = os.getenv("BREVO_SENDER_EMAIL")
 

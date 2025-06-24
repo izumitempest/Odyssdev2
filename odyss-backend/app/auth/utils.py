@@ -3,30 +3,41 @@
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import create_access_token, create_refresh_token
 from datetime import timedelta
+import jwt
+from datetime import datetime, timedelta
+import os
+import dotenv
+
+
+dotenv.load_dotenv()
 
 def hash_password(password: str) -> str:
     return generate_password_hash(password)
 
-def verify_password(password: str, hashed: str) -> bool:
-    return check_password_hash(hashed, password)
+
+def verify_password(input_password, stored_hash):
+    return check_password_hash(stored_hash, input_password)
+  # move this to config/env
 
 def generate_tokens(user):
-    identity = user.id  # keep it simple (UUID)
-    additional_claims = {
-        "email": user.email,
-        "name": user.name
-    }
     access_token = create_access_token(
-        identity=identity,
-        additional_claims={},
+        identity=str(user.id),
+        additional_claims={
+            "email": user.email,
+            "role": user.role.name if user.role else "user"
+        },
         expires_delta=timedelta(hours=1)
     )
-    refresh_token = create_refresh_token(identity=identity)
+
+    refresh_token = create_refresh_token(
+        identity=str(user.id),
+        expires_delta=timedelta(days=7)
+    )
+
     return {
         "access_token": access_token,
         "refresh_token": refresh_token
     }
-
 # import random
 # from datetime import datetime, timedelta
 # from app.extensions import db
@@ -84,36 +95,45 @@ def generate_tokens(user):
 #         return False
 
 
-import resend
-from flask import current_app, request
-import requests
-import os
-from dotenv import load_dotenv
-load_dotenv()
+# 
 
-RESEND_API_KEY = os.getenv("RESEND_API_KEY")
-print("🔐 Resend API Key Loaded:", bool(RESEND_API_KEY))
+# app/auth/utils.py
+import random
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
+from app.models.email_otp import EmailOTP
+from app.extensions import db
+from app.config import Config
+from datetime import datetime, timedelta, timezone
+from app.utils.otp import generate_otp
 
 def send_otp_email(email, otp):
+    now = datetime.now(timezone.utc)
+    expires = now + timedelta(minutes=10)
+
+    # Replace or create OTP record
+
+    record = EmailOTP.query.filter_by(email=email).first()
+    if record:
+        record.otp = otp
+        record.expires_at = expires
+        record.created_at = now
+    else:
+        record = EmailOTP(email=email, otp=otp, expires_at=expires, created_at=now)
+        db.session.add(record)
+
+    db.session.commit()
+
+    # Send the OTP email
+    message = Mail(
+        from_email=Config.EMAIL_FROM,
+        to_emails=email,
+        subject="Your Odyss Verification Code",
+        html_content=f"<h2>🔐 Your OTP is: <strong>{otp}</strong></h2><p>This code expires in 10 minutes.</p>"
+    )
     try:
-        response = requests.post(
-            "https://api.resend.com/emails",
-            headers={
-                "Authorization": f"Bearer {RESEND_API_KEY}",
-                "Content-Type": "application/json"
-            },
-            json={
-                "from": "lilice308@gmail.com",  # Use this unless you're verified
-                "to": [email],
-                "subject": "Your Odyss OTP Code",
-                "html": f"<p>Your OTP is: <strong>{otp}</strong></p>",
-            }
-        )
-
-        print("📨 Resend response:", response.status_code, response.text)
-
-        return response.status_code == 200
-
+        sg = SendGridAPIClient(Config.SENDGRID_API_KEY)
+        sg.send(message)
     except Exception as e:
-        print("❌ Exception caught while sending email:", e)
+        print("❌ Failed to send email:", str(e))
         return False

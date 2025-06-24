@@ -1,0 +1,100 @@
+companies
+id UUID PRIMARY KEY
+name VARCHAR
+email VARCHAR UNIQUE
+password_hash TEXT
+company_name VARCHAR
+company_email VARCHAR
+company_cert TEXT
+access_code TEXT
+created_at TIMESTAMP
+
+vehicles
+id UUID PRIMARY KEY
+company_id UUID FOREIGN KEY REFERENCES companies(id)
+type VARCHAR
+capacity INT
+features TEXT
+
+routes
+id UUID PRIMARY KEY
+company_id UUID FOREIGN KEY REFERENCES companies(id)
+origin VARCHAR
+destination VARCHAR
+dep_time TIMESTAMP
+price FLOAT
+terminal JSONB
+vehicles JSONB
+
+trips
+id UUID PRIMARY KEY
+route_id UUID FOREIGN KEY REFERENCES routes(id)
+departure_time TIMESTAMP
+arrival_time TIMESTAMP
+seats_total INT
+seats_available INT
+price FLOAT
+
+bookings
+id UUID PRIMARY KEY
+trip_id UUID FOREIGN KEY REFERENCES trips(route_id)
+user_id UUID FOREIGN KEY REFERENCES users(id)
+seat_number INT
+status VARCHAR
+created_at TIMESTAMP
+
+
+payments_user
+id UUID PRIMARY KEY
+user_id UUID FOREIGN KEY REFERENCES users(id)
+booking_id UUID FOREIGN KEY REFERENCES bookings(id)
+amount FLOAT
+status VARCHAR
+reference VARCHAR UNIQUE
+created_at TIMESTAMP
+
+payments_company
+id UUID PRIMARY KEY
+company_id UUID FOREIGN KEY REFERENCES companies(id)
+booking_id UUID FOREIGN KEY REFERENCES bookings(id)
+amount FLOAT
+status VARCHAR
+reference VARCHAR UNIQUE
+created_at TIMESTAMP
+
+endpoints
+/companies/signup
+{
+  "name": "John Doe",
+  "email": "jdoe@odyss.com",
+  "password": "secret",
+  "company_name": "Galaxy Transport",
+  "company_email": "contact@galaxy.ng",
+  "company_cert": "CAC1234567",
+  "accessCode": "GXY-OFFICIAL"
+}
+
+POST /vehicles/
+{
+  "company_id": "uuid",
+  "type": "Hiace",
+  "capacity": 15,
+  "features": "AC, TV, Wi-Fi"
+  "vehicle_type" :
+}
+
+GET /vehicles?company_id=uuid
+
+POST /routes/
+{
+  "company_id": "uuid",
+  "origin": "Enugu",
+  "destination": "Lagos",
+  "dep_time": "2025-07-01T08:00:00",
+  "price": 4500,
+  "terminal": ["Shoprite Terminal", "Main Park"],
+  "vehicles": ["Toyota Hiace", "Ford Transit"]
+}
+
+GET /bookings?company_id=uuid
+
