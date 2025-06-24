@@ -8,6 +8,7 @@ from app.auth.models import OAuthIdentity
 from app.auth.utils import hash_password, verify_password, generate_tokens
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
+from app.models.role import Role
 
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
@@ -32,9 +33,12 @@ def google_oauth():
 
         # Check if user exists
         user = User.query.filter_by(email=email).first()
+        default_role = Role.query.filter_by(name="user").first()
+
 
         if not user:
             user = User(email=email, name=name, avatar=avatar)
+            user.role = default_role
             db.session.add(user)
             db.session.flush()  # get user.id
 
@@ -70,7 +74,16 @@ def register():
     if User.query.filter_by(email=email).first():
         return jsonify({"error": "Email already registered"}), 400
 
+    # Get the default role (not admin)
+    default_role = Role.query.filter_by(name="user").first()
+    if not default_role:
+        # Optionally, create the role if it doesn't exist
+        default_role = Role(name="user")
+        db.session.add(default_role)
+        db.session.commit()
+
     user = User(email=email, password_hash=hash_password(password))
+    user.role = default_role  # Assign the default role
     db.session.add(user)
     db.session.commit()
 

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Paystack Payment</title>
+  <script src="https://js.paystack.co/v1/inline.js"></script>
+</head>
+
+<body>
+  <button onclick="payNow()">Pay Now</button>
+
+  <script>
+    async function payNow() {
+      const bookingId = "3f3ce79c-57a1-40a0-a151-841724fd10a4";
+
+      const response = await fetch('http://localhost:5000/payments/initiate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTc1MDc0OTM3OSwianRpIjoiMmNmNzYxMGQtZmYyMy00ZDM3LTk4YWQtZTYwYWE2ZDA3MDczIiwidHlwZSI6ImFjY2VzcyIsInN1YiI6IjJlZDY5NmJiLWJiMzMtNDEzMi04ODU2LWZkOGExOGJhOGU0YyIsIm5iZiI6MTc1MDc0OTM3OSwiY3NyZiI6IjI3NzIzNDIxLTEzNjUtNDdlNy05NmE1LWE5OGU4Yjg5YzZjYSIsImV4cCI6MTc1MDc1Mjk3OX0.0IERUrxQR45uRKdm4F2UfsKtWrU9_YxK-M6z81c70do' // JWT here
+        },
+        body: JSON.stringify({
+          booking_id: bookingId,
+          payment_method: "paystack"
+        })
+      });
+
+      const data = await response.json();
+      if (!data.reference) return alert("Error initiating payment");
+
+      const handler = PaystackPop.setup({
+        key: 'pk_test_1f79fb9c1b6f39a2a1265a88cc619e77b752a372',
+        email: 'izumi@test.com',
+        amount: data.amount * 100,
+        currency: 'NGN',
+        ref: data.reference,
+        callback: function (response) {
+          fetch("http://localhost:5000/payments/verify", {
+            method: "POST",
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTc1MDc0OTM3OSwianRpIjoiMmNmNzYxMGQtZmYyMy00ZDM3LTk4YWQtZTYwYWE2ZDA3MDczIiwidHlwZSI6ImFjY2VzcyIsInN1YiI6IjJlZDY5NmJiLWJiMzMtNDEzMi04ODU2LWZkOGExOGJhOGU0YyIsIm5iZiI6MTc1MDc0OTM3OSwiY3NyZiI6IjI3NzIzNDIxLTEzNjUtNDdlNy05NmE1LWE5OGU4Yjg5YzZjYSIsImV4cCI6MTc1MDc1Mjk3OX0.0IERUrxQR45uRKdm4F2UfsKtWrU9_YxK-M6z81c70do'
+            },
+            body: JSON.stringify({
+              reference: response.reference,
+              booking_id: bookingId // ✅ include it here too
+            })
+          })
+            .then(res => res.json())
+            .then(data => {
+              alert("Payment: " + (data.message || data.error || "Unknown"));
+            })
+            .catch(err => {
+              console.error(err);
+              alert("Verification failed");
+            });
+        },
+        onClose: function () {
+          alert("Payment window closed");
+        }
+      });
+
+      handler.openIframe();
+    }
+  </script>
+
+</body>
+
+</html>

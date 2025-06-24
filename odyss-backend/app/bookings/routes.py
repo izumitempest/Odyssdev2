@@ -107,3 +107,4 @@ def get_trip_seats(trip_id):
         "trip_id": str(trip_id),
         "seats_taken": seats
     })
+
