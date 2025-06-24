@@ -10,10 +10,13 @@ from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
 from app.models.role import Role
 from app.models.email_otp import EmailOTP
-from app.auth.utils import create_and_send_otp
+from app.auth.utils import send_otp_email
 from werkzeug.security import generate_password_hash
+from app.utils.otp import generate_otp
+from datetime import datetime, timedelta
 
-
+# In-memory store for OTPs (for development/testing only)
+otp_store = {}
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
@@ -101,7 +104,19 @@ def request_otp():
     if not email:
         return jsonify({"error": "Email is required"}), 400
 
-    create_and_send_otp(email)
+    otp = generate_otp()
+
+    otp_store[email] = {
+        "code": otp,
+        "expires_at": datetime.utcnow() + timedelta(minutes=10)
+    }
+
+    print(f"📨 Sending OTP {otp} to {email}...")
+
+    if not send_otp_email(email, otp):
+        print("❌ Failed to send email.")
+        return jsonify({"error": "Failed to send email"}), 500
+
     return jsonify({"message": "OTP sent to email"}), 200
 
 
@@ -163,7 +178,7 @@ def login():
     if not user or not verify_password(password, user.password_hash):
         return jsonify({"error": "Invalid credentials"}), 401
 
-    tokens = generate_tokens(user)  # ✅ user is the full SQLAlchemy object
+    tokens = generate_tokens(user)  # user is the full SQLAlchemy object
 
     return jsonify(tokens), 200
 
