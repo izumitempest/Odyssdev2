@@ -9,6 +9,10 @@ from app.auth.utils import hash_password, verify_password, generate_tokens
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
 from app.models.role import Role
+from app.models.email_otp import EmailOTP
+from app.auth.utils import create_and_send_otp
+from werkzeug.security import generate_password_hash
+
 
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
@@ -56,13 +60,49 @@ def google_oauth():
             db.session.add(identity)
 
         db.session.commit()
-        tokens = generate_tokens(user)  # ✅ user is the full SQLAlchemy object
+        tokens = generate_tokens(user)  # user is the full SQLAlchemy object
 
         return jsonify(tokens), 200
 
     except Exception as e:
         print("OAuth error:", e)
         return jsonify({"error": "Invalid token"}), 400
+    
+
+@auth_bp.route('/verify-otp', methods=['POST'])
+def verify_otp():
+    data = request.get_json()
+    email = data.get("email")
+    otp = data.get("otp")
+
+
+    if not email or not otp:
+        return jsonify({"error": "Email and OTP are required"}), 400
+
+
+    record = EmailOTP.query.filter_by(email=email).first()
+    if not record or record.otp != otp:
+        return jsonify({"error": "Invalid OTP"}), 400
+    if record.is_expired():
+        return jsonify({"error": "OTP expired"}), 400
+
+    # OTP valid: mark user as verified or allow account creation
+    db.session.delete(record)  # optional: remove OTP after success
+    db.session.commit()
+
+    return jsonify({"message": "OTP verified"}), 200
+
+
+@auth_bp.route('/request-otp', methods=['POST'])
+def request_otp():
+    data = request.get_json()
+    email = data.get("email")
+
+    if not email:
+        return jsonify({"error": "Email is required"}), 400
+
+    create_and_send_otp(email)
+    return jsonify({"message": "OTP sent to email"}), 200
 
 
 @auth_bp.route("/register", methods=["POST"])
@@ -70,6 +110,15 @@ def register():
     data = request.get_json()
     email = data.get("email")
     password = data.get("password")
+
+    required_fields = ["first_name", "last_name", "nickname", "email", "password", "bio", "phone_number", "profile_pic", "intro_video"]
+    if not all(field in data and data[field] for field in required_fields):
+        return jsonify({"error": "Missing required fields"}), 400
+
+# Check if OTP exists for email
+    if EmailOTP.query.filter_by(email=data['email']).first():
+        return jsonify({"error": "Email not verified"}), 400
+
 
     if User.query.filter_by(email=email).first():
         return jsonify({"error": "Email already registered"}), 400
@@ -81,13 +130,27 @@ def register():
         default_role = Role(name="user")
         db.session.add(default_role)
         db.session.commit()
-
-    user = User(email=email, password_hash=hash_password(password))
-    user.role = default_role  # Assign the default role
+    
+    user = User(
+        first_name=data["first_name"],
+        last_name=data["last_name"],
+        nickname=data["nickname"],
+        email=data["email"],
+        password=generate_password_hash(data["password"]),
+        bio=data["bio"],
+        phone_number=data["phone_number"],
+        profile_pic=data["profile_pic"],
+        intro_video=data["intro_video"]
+    )
     db.session.add(user)
     db.session.commit()
 
-    return jsonify({"message": "User registered successfully"}), 201
+    return jsonify({"message": "User registered successfully"}), 201    
+    # user.role = default_role  # Assign the default role
+    # db.session.add(user)
+    # db.session.commit()
+
+    # return jsonify({"message": "User registered successfully"}), 201
 
 
 @auth_bp.route("/login", methods=["POST"])

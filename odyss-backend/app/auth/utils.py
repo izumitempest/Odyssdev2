@@ -26,3 +26,29 @@ def generate_tokens(user):
         "access_token": access_token,
         "refresh_token": refresh_token
     }
+
+import random
+from datetime import datetime, timedelta
+from app.extensions import db
+from app.models.email_otp import EmailOTP
+
+def generate_otp():
+    return f"{random.randint(100000, 999999)}"
+
+def create_and_send_otp(email):
+    otp_code = generate_otp()
+    expires = datetime.utcnow() + timedelta(minutes=10)
+
+    existing = EmailOTP.query.filter_by(email=email).first()
+    if existing:
+        existing.otp = otp_code
+        existing.expires_at = expires
+    else:
+        new_otp = EmailOTP(email=email, otp=otp_code, expires_at=expires)
+        db.session.add(new_otp)
+    db.session.commit()
+
+    # TODO: Send `otp_code` to `email` using your email provider
+    print(f"[DEV ONLY] OTP for {email}: {otp_code}")  # Remove in prod
+    return otp_code
+
