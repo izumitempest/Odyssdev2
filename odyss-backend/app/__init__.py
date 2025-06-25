@@ -9,13 +9,16 @@ from app.trips.routes import trips_bp
 from app.bookings.routes import bookings_bp
 from app.bookings.routes import booking_bp
 from app.payments.routes import payments_bp
-# from app.companies.routes import companies_bp
+from app.company.routes import company_bp
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 import os
 from datetime import timedelta
 from dotenv import load_dotenv
+from app.models.blacklist import TokenBlacklist
 load_dotenv()  # Load environment variables from .env file
+
+
 
 
 
@@ -33,6 +36,8 @@ def create_app():
     app.register_blueprint(bookings_bp)
     app.register_blueprint(booking_bp)
     app.register_blueprint(payments_bp)
+    app.register_blueprint(company_bp)
+
     # app.register_blueprint(companies_bp)
 
     
@@ -45,6 +50,13 @@ def create_app():
         return response
 
 
+    @jwt.token_in_blocklist_loader
+    def check_if_token_revoked(jwt_header, jwt_payload):
+        jti = jwt_payload["jti"]
+        return TokenBlacklist.query.filter_by(jti=jti).first() is not None
+
+
+
     # Register API Blueprint
     # app.register_blueprint(api_bp, url_prefix='/api/v1')
 
@@ -52,7 +64,6 @@ def create_app():
     # Register extensions
 
     db.init_app(app)
-    jwt = JWTManager(app)
     jwt.init_app(app)
     migrate.init_app(app, db)
     cors.init_app(app)
