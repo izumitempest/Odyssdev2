@@ -54,7 +54,9 @@ def create_app():
         else:
             response.headers["Access-Control-Allow-Origin"] = "http://localhost:5174"
         response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
-        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers["Content-Type"] = "application/json"
         return response
 
 
