@@ -1,7 +1,7 @@
 # routes.py
 # app/auth/routes.py
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 from app.extensions import db
 from app.models.user import User
 from app.auth.models import OAuthIdentity
@@ -24,6 +24,8 @@ from app.models.role import Role
 from app.models.email_otp import EmailOTP
 from app.extensions import db
 from flask import request, jsonify
+from app.models.blacklist import TokenBlacklist
+
 # In-memory store for OTPs (for development/testing only)
 
 
@@ -214,3 +216,100 @@ def refresh_token():
 
     tokens = generate_tokens(user)
     return jsonify(tokens), 200
+
+@auth_bp.route("/logout", methods=["POST"])
+@jwt_required(refresh=True)
+def logout():
+    jti = get_jwt()["jti"]
+    token_type = get_jwt()["type"]
+    user_id = get_jwt_identity()
+
+    # Add token to blacklist
+    blacklist = TokenBlacklist(
+        jti=jti,
+        token_type=token_type,
+        user_id=user_id
+    )
+    db.session.add(blacklist)
+    db.session.commit()
+
+    return jsonify({"message": "Logged out successfully"}), 200
+
+@auth_bp.route("/change-password", methods=["POST"])
+@jwt_required()
+def change_password():
+    user_id = get_jwt_identity()
+    data = request.get_json()
+
+    old_password = data.get("old_password")
+    new_password = data.get("new_password")
+
+    if not old_password or not new_password:
+        return jsonify({"error": "Both old and new password are required"}), 400
+
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    if not verify_password(old_password, user.password_hash):
+        return jsonify({"error": "Old password is incorrect"}), 403
+
+    user.password_hash = hash_password(new_password)
+    db.session.commit()
+
+    return jsonify({"message": "Password changed successfully"}), 200
+
+@auth_bp.route("/forgot-password", methods=["POST"])
+def forgot_password():
+    data = request.get_json()
+    email = data.get("email")
+
+    if not email:
+        return jsonify({"error": "Email is required"}), 400
+
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    # Generate and save OTP
+    otp = generate_otp()
+    expires_at = datetime.utcnow() + timedelta(minutes=10)
+
+    # Update if OTP exists, else create
+    otp_entry = EmailOTP.query.filter_by(email=email).first()
+    if otp_entry:
+        otp_entry.otp = otp
+        otp_entry.expires_at = expires_at
+    else:
+        otp_entry = EmailOTP(email=email, otp=otp, expires_at=expires_at)
+        db.session.add(otp_entry)
+
+    db.session.commit()
+    send_otp_email(email, otp)
+
+    return jsonify({"message": "Reset OTP sent to email"}), 200
+
+@auth_bp.route("/reset-password", methods=["POST"])
+def reset_password():
+    data = request.get_json()
+    email = data.get("email")
+    otp = data.get("otp")
+    new_password = data.get("new_password")
+
+    if not all([email, otp, new_password]):
+        return jsonify({"error": "Email, OTP, and new password required"}), 400
+
+    otp_entry = EmailOTP.query.filter_by(email=email, otp=otp).first()
+    if not otp_entry or otp_entry.is_expired():
+        return jsonify({"error": "Invalid or expired OTP"}), 400
+
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    user.password_hash = hash_password(new_password)
+    db.session.delete(otp_entry)  # Clear used OTP
+    db.session.commit()
+
+    return jsonify({"message": "Password reset successfully"}), 200
+
