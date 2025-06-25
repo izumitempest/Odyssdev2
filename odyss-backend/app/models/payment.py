@@ -19,3 +19,12 @@ class Payment(db.Model):
 
     def __repr__(self):
         return f"<Payment {self.reference} | ₦{self.amount} | {self.status}>"
+    
+
+class CompanyPayment(db.Model):
+    __tablename__ = "payments_company"
+
+    id = db.Column(db.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    company_id = db.Column(db.UUID(as_uuid=True), db.ForeignKey("companies.id"))
+    company = db.relationship("Company", back_populates="payments")
+

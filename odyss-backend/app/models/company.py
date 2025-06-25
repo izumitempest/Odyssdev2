@@ -17,4 +17,4 @@ class Company(db.Model):
 
     vehicles = db.relationship("Vehicle", backref="company", lazy=True)
     routes = db.relationship("Route", backref="company", lazy=True)
-    payments = db.relationship("CompanyPayment", backref="company", lazy=True)
+    payments = db.relationship("CompanyPayment", back_populates="company", lazy=True)

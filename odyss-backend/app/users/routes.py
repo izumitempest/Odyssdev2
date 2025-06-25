@@ -19,12 +19,19 @@ def get_my_profile():
         return jsonify({"error": "User not found"}), 404
 
     return jsonify({
-        "id": user.id,
-        "email": email,
-        "name": user.name,
-        "avatar": user.avatar,
-        "created_at": user.created_at.isoformat()
-    }), 200
+    "id": str(user.id),
+    "email": email,
+    "name": user.name,
+    "first_name": user.first_name,
+    "last_name": user.last_name,
+    "nickname": user.name,
+    "bio": user.bio,
+    "phone_number": user.phone_number,
+    "avatar": user.avatar,
+    "intro_video": user.intro_video,
+    "role": user.role.name if user.role else None,
+    "created_at": user.created_at.isoformat()
+}), 200
 
 @user_bp.route("/me", methods=["PUT"])
 @jwt_required()
@@ -39,19 +46,25 @@ def update_my_profile():
     name = data.get("name")
     avatar = data.get("avatar")
 
-    if name:
-        user.name = name
-    if avatar:
-        user.avatar = avatar
+    if "name" in data:
+        user.name = data["name"]
+    if "avatar" in data:
+        user.avatar = data["avatar"]
+    if "bio" in data:
+        user.bio = data["bio"]
+    if "intro_video" in data:
+        user.intro_video = data["intro_video"]
+    if "phone_number" in data:
+        user.phone_number = data["phone_number"]
 
     db.session.commit()
 
     return jsonify({
         "message": "Profile updated successfully",
         "user": {
-            "id": user.id,
             "email": user.email,
             "name": user.name,
+            "id": user.id,
             "avatar": user.avatar,
             "created_at": user.created_at.isoformat()
         }
