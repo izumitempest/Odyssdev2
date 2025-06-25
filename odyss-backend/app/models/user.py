@@ -1,31 +1,32 @@
-# user.py
 # app/models/user.py
-from app.extensions import db
-from sqlalchemy.dialects.postgresql import UUID
-import uuid
 from datetime import datetime
+import uuid
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
-from app.models.role import Role
-
+from app.extensions import db
 class User(db.Model):
     __tablename__ = 'users'
 
     id = db.Column(db.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     role_id = db.Column(UUID(as_uuid=True), db.ForeignKey('roles.id'), nullable=True)
     role = db.relationship("Role", back_populates="users")
+
     email = db.Column(db.String(120), unique=True, nullable=False)
-    password_hash = db.Column(db.String(255), nullable=True)  # null if OAuth-only
-    name = db.Column(db.String(100), nullable=True)
-    avatar = db.Column(db.String(255), nullable=True)
+    password_hash = db.Column(db.String(255), nullable=True)
+
+    name = db.Column(db.String(100), nullable=True)  # maps to "nickname"
+    avatar = db.Column(db.String(255), nullable=True)  # maps to "profile_pic"
+
+    # New fields for registration
+    first_name = db.Column(db.String(100), nullable=False)
+    last_name = db.Column(db.String(100), nullable=False)
+    phone_number = db.Column(db.String(20), nullable=False)
+    bio = db.Column(db.Text, nullable=True)
+    intro_video = db.Column(db.Text, nullable=True)
+
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    # roles = db.relationship("Role", secondary="user_roles", backref="users")
 
-
-    # OAuth identities
     oauth_identities = relationship("OAuthIdentity", back_populates="user", cascade="all, delete-orphan")
-    # Relationships for trips/bookings/payments can go here
-    # bookings = db.relationship("Booking", backref="user", lazy=True)
-    # trips = db.relationship("Trip", backref="creator", lazy=True)
 
     def __repr__(self):
         return f"<User {self.email}>"

@@ -5,28 +5,71 @@ from app.extensions import db, jwt, migrate, cors
 from app.auth.routes import auth_bp
 from app.users.routes import user_bp
 from app.trips.routes import trips_bp
-from app.bookings.routes import bookings_bp, booking_bp
-from app.company.routes import company_bp
+# from .api.v1.routes import api_bp
+from app.bookings.routes import bookings_bp
+from app.bookings.routes import booking_bp
 from app.payments.routes import payments_bp
+from app.company.routes import company_bp
+from flask_cors import CORS
+from flask_jwt_extended import JWTManager
+import os
+from datetime import timedelta
+from dotenv import load_dotenv
+from app.models.blacklist import TokenBlacklist
+load_dotenv()  # Load environment variables from .env file
+
+
+
 
 
 def create_app():
     app = Flask(__name__)
+    CORS(app)
+    app.config["JWT_SECRET_KEY"] = os.getenv("SECRET_KEY")
+    app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=1)
+    app.config["JWT_REFRESH_TOKEN_EXPIRES"] = timedelta(days=7)
+
     app.config.from_object(Config)
-    
-    # Register blueprints
     app.register_blueprint(auth_bp)
     app.register_blueprint(user_bp)
     app.register_blueprint(trips_bp)
     app.register_blueprint(bookings_bp)
     app.register_blueprint(booking_bp)
-    app.register_blueprint(company_bp)
     app.register_blueprint(payments_bp)
+    app.register_blueprint(company_bp)
+
+    # app.register_blueprint(companies_bp)
+
+    
+
+    @app.after_request
+    def apply_cors(response):
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+        return response
+
+
+    @jwt.token_in_blocklist_loader
+    def check_if_token_revoked(jwt_header, jwt_payload):
+        jti = jwt_payload["jti"]
+        return TokenBlacklist.query.filter_by(jti=jti).first() is not None
+
+
+
+    # Register API Blueprint
+    # app.register_blueprint(api_bp, url_prefix='/api/v1')
+
 
     # Register extensions
+
     db.init_app(app)
     jwt.init_app(app)
     migrate.init_app(app, db)
     cors.init_app(app)
+
+    # Blueprints here
+    # from app.api.v1.routes import api_bp
+    # app.register_blueprint(api_bp, url_prefix='/api/v1')
 
     return app

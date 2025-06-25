@@ -1,0 +1,18 @@
+# Include base requirements
+-r base.txt
+
+# Testing framework
+pytest==7.4.0
+pytest-flask==1.2.0
+pytest-cov==4.1.0
+pytest-mock==3.11.1
+
+# Test data generation
+factory-boy==3.3.0
+faker==19.6.2
+
+# Test database
+sqlite3==0.0.0  # Built-in Python module
+
+# Coverage reporting
+coverage==7.3.0

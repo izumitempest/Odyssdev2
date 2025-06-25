@@ -1,0 +1,1326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Odyss Backend API Test Interface</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50, #3498db);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+        }
+
+        .config-section {
+            padding: 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .config-row {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .config-row label {
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .config-row input {
+            flex: 1;
+            min-width: 200px;
+            padding: 8px 12px;
+            border: 2px solid #dee2e6;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .config-row input:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+
+        .tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .tab {
+            padding: 15px 25px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            font-size: 14px;
+            font-weight: 600;
+            color: #6c757d;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            background: white;
+            color: #007bff;
+            border-bottom: 3px solid #007bff;
+        }
+
+        .tab:hover {
+            background: #e9ecef;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 20px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .endpoint-group {
+            margin-bottom: 30px;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .endpoint-group h3 {
+            background: #f8f9fa;
+            padding: 15px;
+            margin: 0;
+            color: #495057;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .endpoint {
+            padding: 20px;
+            border-bottom: 1px solid #f1f3f4;
+        }
+
+        .endpoint:last-child {
+            border-bottom: none;
+        }
+
+        .endpoint-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .method {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        .method.GET { background: #d4edda; color: #155724; }
+        .method.POST { background: #cce5ff; color: #004085; }
+        .method.PUT { background: #fff3cd; color: #856404; }
+        .method.DELETE { background: #f8d7da; color: #721c24; }
+
+        .endpoint-url {
+            font-family: 'Courier New', monospace;
+            background: #f8f9fa;
+            padding: 8px 12px;
+            border-radius: 4px;
+            flex: 1;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #dee2e6;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .form-group textarea {
+            height: 80px;
+            resize: vertical;
+            font-family: 'Courier New', monospace;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .response-section {
+            margin-top: 20px;
+        }
+
+        .response-content {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .status-success {
+            border-left: 4px solid #28a745;
+            background: #d4edda;
+        }
+
+        .status-error {
+            border-left: 4px solid #dc3545;
+            background: #f8d7da;
+        }
+
+        .auth-status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-weight: 600;
+            z-index: 1000;
+        }
+
+        .auth-status.authenticated {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .auth-status.unauthenticated {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .quick-actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .quick-actions .btn {
+            font-size: 12px;
+            padding: 6px 12px;
+        }
+
+        .json-example {
+            background: #f1f3f4;
+            border-radius: 4px;
+            padding: 10px;
+            margin-top: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            border: 1px solid #dee2e6;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+            margin-bottom: 0;
+        }
+
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: normal;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .checkbox-label:hover {
+            background-color: #f8f9fa;
+        }
+
+        .checkbox-label input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+        }
+
+        @media (max-width: 768px) {
+            .config-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .tabs {
+                flex-direction: column;
+            }
+
+            .endpoint-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .form-row {
+                flex-direction: column;
+            }
+
+            .checkbox-group {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Odyss Backend API Test Interface</h1>
+            <p>Comprehensive testing interface for all API endpoints</p>
+        </div>
+
+        <div class="config-section">
+            <div class="config-row">
+                <label for="baseUrl">Base URL:</label>
+                <input type="text" id="baseUrl" value="http://localhost:5000" placeholder="http://localhost:5000">
+                
+                <label for="authToken">Auth Token:</label>
+                <input type="text" id="authToken" placeholder="Bearer token will appear here after login">
+            </div>
+        </div>
+
+        <div class="auth-status unauthenticated" id="authStatus">
+            🔒 Not Authenticated
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('auth')">🔐 Authentication</button>
+            <button class="tab" onclick="showTab('users')">👤 Users</button>
+            <button class="tab" onclick="showTab('trips')">🚌 Trips</button>
+            <button class="tab" onclick="showTab('bookings')">📝 Bookings</button>
+            <button class="tab" onclick="showTab('payments')">💳 Payments</button>
+            <button class="tab" onclick="showTab('company')">🏢 Company</button>
+        </div>
+
+        <!-- Authentication Tab -->
+        <div id="auth" class="tab-content active">
+            <div class="quick-actions">
+                <button class="btn" onclick="fillSampleUser()">Fill Sample User</button>
+                <button class="btn" onclick="fillSampleCompany()">Fill Sample Company</button>
+                <button class="btn" onclick="clearAllTokens()">Clear Tokens</button>
+            </div>
+
+            <div class="endpoint-group">
+                <h3>🔐 User Authentication</h3>
+                
+                <div class="endpoint">
+                    <div class="endpoint-header">
+                        <span class="method POST">POST</span>
+                        <span class="endpoint-url">/auth/request-otp</span>
+                    </div>
+                    <div class="form-group">
+                        <label>Email:</label>
+                        <input type="email" id="otp-email" placeholder="user@example.com">
+                    </div>
+                    <button class="btn" onclick="requestOTP()">Request OTP</button>
+                    <div class="response-section">
+                        <div id="otp-response" class="response-content"></div>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <div class="endpoint-header">
+                        <span class="method POST">POST</span>
+                        <span class="endpoint-url">/auth/verify-otp</span>
+                    </div>
+                    <div class="form-group">
+                        <label>Email:</label>
+                        <input type="email" id="verify-email" placeholder="user@example.com">
+                    </div>
+                    <div class="form-group">
+                        <label>OTP Code:</label>
+                        <input type="text" id="verify-otp" placeholder="123456">
+                    </div>
+                    <button class="btn" onclick="verifyOTP()">Verify OTP</button>
+                    <div class="response-section">
+                        <div id="verify-response" class="response-content"></div>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <div class="endpoint-header">
+                        <span class="method POST">POST</span>
+                        <span class="endpoint-url">/auth/register</span>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>First Name:</label>
+                            <input type="text" id="register-first-name" placeholder="John">
+                        </div>
+                        <div class="form-group">
+                            <label>Last Name:</label>
+                            <input type="text" id="register-last-name" placeholder="Doe">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Nickname:</label>
+                            <input type="text" id="register-nickname" placeholder="johndoe">
+                        </div>
+                        <div class="form-group">
+                            <label>Email:</label>
+                            <input type="email" id="register-email" placeholder="john@example.com">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Password:</label>
+                            <input type="password" id="register-password" placeholder="password123">
+                        </div>
+                        <div class="form-group">
+                            <label>Phone Number:</label>
+                            <input type="tel" id="register-phone" placeholder="+234123456789">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Bio:</label>
+                        <textarea id="register-bio" placeholder="Tell us about yourself..." style="height: 60px;"></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Profile Picture URL:</label>
+                            <input type="url" id="register-profile-pic" placeholder="https://example.com/profile.jpg">
+                        </div>
+                        <div class="form-group">
+                            <label>Intro Video URL:</label>
+                            <input type="url" id="register-intro-video" placeholder="https://example.com/intro.mp4">
+                        </div>
+                    </div>
+                    <button class="btn" onclick="registerUser()">Register User</button>
+                    <div class="response-section">
+                        <div id="register-response" class="response-content"></div>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <div class="endpoint-header">
+                        <span class="method POST">POST</span>
+                        <span class="endpoint-url">/auth/login</span>
+                    </div>
+                    <div class="form-group">
+                        <label>Email:</label>
+                        <input type="email" id="login-email" placeholder="user@example.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Password:</label>
+                        <input type="password" id="login-password" placeholder="password">
+                    </div>
+                    <button class="btn" onclick="loginUser()">Login</button>
+                    <div class="response-section">
+                        <div id="login-response" class="response-content"></div>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <div class="endpoint-header">
+                        <span class="method POST">POST</span>
+                        <span class="endpoint-url">/auth/oauth/google</span>
+                    </div>
+                    <div class="form-group">
+                        <label>Google ID Token:</label>
+                        <input type="text" id="google-token" placeholder="Google OAuth ID token">
+                    </div>
+                    <button class="btn" onclick="googleOAuth()">Google OAuth</button>
+                    <div class="response-section">
+                        <div id="google-response" class="response-content"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Users Tab -->
+        <div id="users" class="tab-content">
+            <div class="endpoint-group">
+                <h3>👤 User Management</h3>
+                
+                <div class="endpoint">
+                    <div class="endpoint-header">
+                        <span class="method GET">GET</span>
+                        <span class="endpoint-url">/users/me</span>
+                    </div>
+                    <button class="btn" onclick="getUserProfile()">Get My Profile</button>
+                    <div class="response-section">
+                        <div id="profile-response" class="response-content"></div>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <div class="endpoint-header">
+                        <span class="method PUT">PUT</span>
+                        <span class="endpoint-url">/users/me</span>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Name:</label>
+                            <input type="text" id="update-name" placeholder="Updated Name">
+                        </div>
+                        <div class="form-group">
+                            <label>Phone Number:</label>
+                            <input type="tel" id="update-phone" placeholder="+234987654321">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Bio:</label>
+                        <textarea id="update-bio" placeholder="Updated bio..." style="height: 60px;"></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Avatar URL:</label>
+                            <input type="url" id="update-avatar" placeholder="https://example.com/new-avatar.jpg">
+                        </div>
+                        <div class="form-group">
+                            <label>Intro Video URL:</label>
+                            <input type="url" id="update-intro-video" placeholder="https://example.com/new-intro.mp4">
+                        </div>
+                    </div>
+                    <button class="btn" onclick="updateUserProfile()">Update Profile</button>
+                    <div class="response-section">
+                        <div id="update-profile-response" class="response-content"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Trips Tab -->
+        <div id="trips" class="tab-content">
+            <div class="endpoint-group">
+                <h3>🚌 Trip Management</h3>
+                
+                <div class="endpoint">
+                    <div class="endpoint-header">
+                        <span class="method GET">GET</span>
+                        <span class="endpoint-url">/trips/</span>
+                    </div>
+                    <button class="btn" onclick="listTrips()">List All Trips</button>
+                    <div class="response-section">
+                        <div id="trips-list-response" class="response-content"></div>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <div class="endpoint-header">
+                        <span class="method POST">POST</span>
+                        <span class="endpoint-url">/trips/</span>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Origin:</label>
+                            <input type="text" id="create-trip-origin" placeholder="Lagos">
+                        </div>
+                        <div class="form-group">
+                            <label>Destination:</label>
+                            <input type="text" id="create-trip-destination" placeholder="Abuja">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Departure Date:</label>
+                            <input type="date" id="create-trip-dep-date" value="2024-01-15">
+                        </div>
+                        <div class="form-group">
+                            <label>Departure Time:</label>
+                            <input type="time" id="create-trip-dep-time" value="08:00">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Arrival Date:</label>
+                            <input type="date" id="create-trip-arr-date" value="2024-01-15">
+                        </div>
+                        <div class="form-group">
+                            <label>Arrival Time:</label>
+                            <input type="time" id="create-trip-arr-time" value="14:00">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Total Seats:</label>
+                            <input type="number" id="create-trip-seats" placeholder="40" min="1" max="100">
+                        </div>
+                        <div class="form-group">
+                            <label>Price (₦):</label>
+                            <input type="number" id="create-trip-price" placeholder="15000" min="0" step="100">
+                        </div>
+                    </div>
+                    <button class="btn" onclick="createTrip()">Create Trip</button>
+                    <div class="response-section">
+                        <div id="create-trip-response" class="response-content"></div>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <div class="endpoint-header">
+                        <span class="method GET">GET</span>
+                        <span class="endpoint-url">/trips/{trip_id}</span>
+                    </div>
+                    <div class="form-group">
+                        <label>Trip ID:</label>
+                        <input type="text" id="trip-id" placeholder="trip-uuid-here">
+                    </div>
+                    <button class="btn" onclick="getTrip()">Get Trip Details</button>
+                    <div class="response-section">
+                        <div id="trip-details-response" class="response-content"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bookings Tab -->
+        <div id="bookings" class="tab-content">
+            <div class="endpoint-group">
+                <h3>📝 Booking Management</h3>
+                
+                <div class="endpoint">
+                    <div class="endpoint-header">
+                        <span class="method POST">POST</span>
+                        <span class="endpoint-url">/trips/{trip_id}/book</span>
+                    </div>
+                    <div class="form-group">
+                        <label>Trip ID:</label>
+                        <input type="text" id="book-trip-id" placeholder="trip-uuid-here">
+                    </div>
+                    <div class="form-group">
+                        <label>Seat Number:</label>
+                        <input type="number" id="seat-number" placeholder="1" min="1" max="50">
+                    </div>
+                    <button class="btn" onclick="bookTrip()">Book Trip</button>
+                    <div class="response-section">
+                        <div id="book-trip-response" class="response-content"></div>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <div class="endpoint-header">
+                        <span class="method GET">GET</span>
+                        <span class="endpoint-url">/bookings/</span>
+                    </div>
+                    <button class="btn" onclick="getUserBookings()">Get My Bookings</button>
+                    <div class="response-section">
+                        <div id="user-bookings-response" class="response-content"></div>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <div class="endpoint-header">
+                        <span class="method DELETE">DELETE</span>
+                        <span class="endpoint-url">/bookings/{booking_id}</span>
+                    </div>
+                    <div class="form-group">
+                        <label>Booking ID:</label>
+                        <input type="text" id="cancel-booking-id" placeholder="booking-uuid-here">
+                    </div>
+                    <button class="btn" onclick="cancelBooking()">Cancel Booking</button>
+                    <div class="response-section">
+                        <div id="cancel-booking-response" class="response-content"></div>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <div class="endpoint-header">
+                        <span class="method GET">GET</span>
+                        <span class="endpoint-url">/trips/{trip_id}/seats</span>
+                    </div>
+                    <div class="form-group">
+                        <label>Trip ID:</label>
+                        <input type="text" id="seats-trip-id" placeholder="trip-uuid-here">
+                    </div>
+                    <button class="btn" onclick="getTripSeats()">Get Taken Seats</button>
+                    <div class="response-section">
+                        <div id="trip-seats-response" class="response-content"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payments Tab -->
+        <div id="payments" class="tab-content">
+            <div class="endpoint-group">
+                <h3>💳 Payment Management</h3>
+                
+                <div class="endpoint">
+                    <div class="endpoint-header">
+                        <span class="method POST">POST</span>
+                        <span class="endpoint-url">/payments/initiate</span>
+                    </div>
+                    <div class="form-group">
+                        <label>Booking ID:</label>
+                        <input type="text" id="payment-booking-id" placeholder="booking-uuid-here">
+                    </div>
+                    <div class="form-group">
+                        <label>Payment Method:</label>
+                        <select id="payment-method">
+                            <option value="paystack">Paystack</option>
+                            <option value="stripe">Stripe</option>
+                        </select>
+                    </div>
+                    <button class="btn" onclick="initiatePayment()">Initiate Payment</button>
+                    <div class="response-section">
+                        <div id="initiate-payment-response" class="response-content"></div>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <div class="endpoint-header">
+                        <span class="method POST">POST</span>
+                        <span class="endpoint-url">/payments/verify</span>
+                    </div>
+                    <div class="form-group">
+                        <label>Payment Reference:</label>
+                        <input type="text" id="payment-reference" placeholder="ODYSS-ABC123">
+                    </div>
+                    <div class="form-group">
+                        <label>Booking ID:</label>
+                        <input type="text" id="verify-booking-id" placeholder="booking-uuid-here">
+                    </div>
+                    <button class="btn" onclick="verifyPayment()">Verify Payment</button>
+                    <div class="response-section">
+                        <div id="verify-payment-response" class="response-content"></div>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <div class="endpoint-header">
+                        <span class="method GET">GET</span>
+                        <span class="endpoint-url">/payments/history</span>
+                    </div>
+                    <button class="btn" onclick="getPaymentHistory()">Get Payment History</button>
+                    <div class="response-section">
+                        <div id="payment-history-response" class="response-content"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Company Tab -->
+        <div id="company" class="tab-content">
+            <div class="endpoint-group">
+                <h3>🏢 Company Management</h3>
+                
+                <div class="endpoint">
+                    <div class="endpoint-header">
+                        <span class="method POST">POST</span>
+                        <span class="endpoint-url">/company/signup</span>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Contact Person Name:</label>
+                            <input type="text" id="company-contact-name" placeholder="John Doe">
+                        </div>
+                        <div class="form-group">
+                            <label>Contact Email:</label>
+                            <input type="email" id="company-contact-email" placeholder="john@company.com">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Password:</label>
+                            <input type="password" id="company-signup-password" placeholder="password123">
+                        </div>
+                        <div class="form-group">
+                            <label>Access Code:</label>
+                            <input type="text" id="company-access-code" placeholder="COMPANY_ACCESS_CODE">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Company Name:</label>
+                            <input type="text" id="company-name" placeholder="Odyss Transport Ltd">
+                        </div>
+                        <div class="form-group">
+                            <label>Company Email:</label>
+                            <input type="email" id="company-email" placeholder="info@odysstransport.com">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Company Certificate (Base64):</label>
+                        <textarea id="company-cert" placeholder="Paste base64-encoded certificate here..." style="height: 60px;"></textarea>
+                        <small style="color: #6c757d;">Upload your company registration certificate as base64 encoded text</small>
+                    </div>
+                    <button class="btn" onclick="companySignup()">Company Signup</button>
+                    <div class="response-section">
+                        <div id="company-signup-response" class="response-content"></div>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <div class="endpoint-header">
+                        <span class="method POST">POST</span>
+                        <span class="endpoint-url">/company/login</span>
+                    </div>
+                    <div class="form-group">
+                        <label>Email:</label>
+                        <input type="email" id="company-login-email" placeholder="company@example.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Password:</label>
+                        <input type="password" id="company-login-password" placeholder="password">
+                    </div>
+                    <button class="btn" onclick="companyLogin()">Company Login</button>
+                    <div class="response-section">
+                        <div id="company-login-response" class="response-content"></div>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <div class="endpoint-header">
+                        <span class="method GET">GET</span>
+                        <span class="endpoint-url">/company/me</span>
+                    </div>
+                    <button class="btn" onclick="getCompanyProfile()">Get Company Profile</button>
+                    <div class="response-section">
+                        <div id="company-profile-response" class="response-content"></div>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <div class="endpoint-header">
+                        <span class="method POST">POST</span>
+                        <span class="endpoint-url">/company/vehicles</span>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Vehicle Type:</label>
+                            <select id="vehicle-type">
+                                <option value="Bus">Bus</option>
+                                <option value="Minibus">Minibus</option>
+                                <option value="Van">Van</option>
+                                <option value="Coach">Coach</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Capacity:</label>
+                            <input type="number" id="vehicle-capacity" placeholder="40" min="4" max="100">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Features:</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-label"><input type="checkbox" id="feature-ac" value="AC"> Air Conditioning</label>
+                            <label class="checkbox-label"><input type="checkbox" id="feature-wifi" value="WiFi"> WiFi</label>
+                            <label class="checkbox-label"><input type="checkbox" id="feature-charging" value="Charging Ports"> Charging Ports</label>
+                            <label class="checkbox-label"><input type="checkbox" id="feature-entertainment" value="Entertainment System"> Entertainment System</label>
+                            <label class="checkbox-label"><input type="checkbox" id="feature-reclining" value="Reclining Seats"> Reclining Seats</label>
+                            <label class="checkbox-label"><input type="checkbox" id="feature-toilet" value="Onboard Toilet"> Onboard Toilet</label>
+                        </div>
+                    </div>
+                    <button class="btn" onclick="addVehicle()">Add Vehicle</button>
+                    <div class="response-section">
+                        <div id="vehicle-response" class="response-content"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let authToken = '';
+        let baseUrl = 'http://localhost:5000';
+
+        // Update base URL when changed
+        document.getElementById('baseUrl').addEventListener('change', function() {
+            baseUrl = this.value;
+        });
+
+        // Update auth token when changed
+        document.getElementById('authToken').addEventListener('change', function() {
+            authToken = this.value;
+            updateAuthStatus();
+        });
+
+        function showTab(tabName) {
+            // Hide all tab contents
+            const contents = document.querySelectorAll('.tab-content');
+            contents.forEach(content => content.classList.remove('active'));
+
+            // Remove active class from all tabs
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+
+            // Show selected tab content
+            document.getElementById(tabName).classList.add('active');
+
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+        }
+
+        function updateAuthStatus() {
+            const authStatus = document.getElementById('authStatus');
+            if (authToken) {
+                authStatus.textContent = '🔓 Authenticated';
+                authStatus.className = 'auth-status authenticated';
+            } else {
+                authStatus.textContent = '🔒 Not Authenticated';
+                authStatus.className = 'auth-status unauthenticated';
+            }
+        }
+
+        function makeRequest(method, endpoint, data = null, responseElementId = null) {
+            const url = baseUrl + endpoint;
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+
+            if (authToken) {
+                headers['Authorization'] = `Bearer ${authToken}`;
+            }
+
+            const options = {
+                method: method,
+                headers: headers
+            };
+
+            if (data) {
+                options.body = JSON.stringify(data);
+            }
+
+            fetch(url, options)
+                .then(async response => {
+                    const responseData = await response.text();
+                    let parsedData;
+                    
+                    try {
+                        parsedData = JSON.parse(responseData);
+                    } catch (e) {
+                        parsedData = responseData;
+                    }
+
+                    const result = {
+                        status: response.status,
+                        statusText: response.statusText,
+                        data: parsedData
+                    };
+
+                    if (responseElementId) {
+                        const responseElement = document.getElementById(responseElementId);
+                        responseElement.textContent = JSON.stringify(result, null, 2);
+                        responseElement.className = response.ok ? 'response-content status-success' : 'response-content status-error';
+                    }
+
+                    // Auto-save tokens from auth responses
+                    if (response.ok && parsedData && (parsedData.access_token || parsedData.tokens)) {
+                        const token = parsedData.access_token || parsedData.tokens.access_token;
+                        if (token) {
+                            authToken = token;
+                            document.getElementById('authToken').value = token;
+                            updateAuthStatus();
+                        }
+                    }
+
+                    console.log('API Response:', result);
+                })
+                .catch(error => {
+                    const errorResult = {
+                        error: error.message,
+                        details: 'Network error or server unreachable'
+                    };
+
+                    if (responseElementId) {
+                        const responseElement = document.getElementById(responseElementId);
+                        responseElement.textContent = JSON.stringify(errorResult, null, 2);
+                        responseElement.className = 'response-content status-error';
+                    }
+
+                    console.error('API Error:', error);
+                });
+        }
+
+        // Authentication Functions
+        function requestOTP() {
+            const email = document.getElementById('otp-email').value;
+            if (!email) {
+                alert('Please enter an email address');
+                return;
+            }
+            makeRequest('POST', '/auth/request-otp', { email }, 'otp-response');
+        }
+
+        function verifyOTP() {
+            const email = document.getElementById('verify-email').value;
+            const otp = document.getElementById('verify-otp').value;
+            if (!email || !otp) {
+                alert('Please enter email and OTP');
+                return;
+            }
+            makeRequest('POST', '/auth/verify-otp', { email, otp }, 'verify-response');
+        }
+
+        function registerUser() {
+            const data = {
+                first_name: document.getElementById('register-first-name').value,
+                last_name: document.getElementById('register-last-name').value,
+                nickname: document.getElementById('register-nickname').value,
+                email: document.getElementById('register-email').value,
+                password: document.getElementById('register-password').value,
+                phone_number: document.getElementById('register-phone').value,
+                bio: document.getElementById('register-bio').value,
+                profile_pic: document.getElementById('register-profile-pic').value,
+                intro_video: document.getElementById('register-intro-video').value
+            };
+
+            // Check required fields
+            const requiredFields = ['first_name', 'last_name', 'nickname', 'email', 'password', 'phone_number', 'bio', 'profile_pic', 'intro_video'];
+            const missingFields = requiredFields.filter(field => !data[field]);
+            
+            if (missingFields.length > 0) {
+                alert(`Please fill in all required fields: ${missingFields.join(', ')}`);
+                return;
+            }
+
+            makeRequest('POST', '/auth/register', data, 'register-response');
+        }
+
+        function loginUser() {
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            if (!email || !password) {
+                alert('Please enter email and password');
+                return;
+            }
+            makeRequest('POST', '/auth/login', { email, password }, 'login-response');
+        }
+
+        function googleOAuth() {
+            const token = document.getElementById('google-token').value;
+            if (!token) {
+                alert('Please enter Google ID token');
+                return;
+            }
+            makeRequest('POST', '/auth/oauth/google', { id_token: token }, 'google-response');
+        }
+
+        // User Functions
+        function getUserProfile() {
+            makeRequest('GET', '/users/me', null, 'profile-response');
+        }
+
+        function updateUserProfile() {
+            const data = {};
+            
+            // Only include fields that have values
+            const name = document.getElementById('update-name').value;
+            const phone = document.getElementById('update-phone').value;
+            const bio = document.getElementById('update-bio').value;
+            const avatar = document.getElementById('update-avatar').value;
+            const introVideo = document.getElementById('update-intro-video').value;
+            
+            if (name) data.name = name;
+            if (phone) data.phone_number = phone;
+            if (bio) data.bio = bio;
+            if (avatar) data.avatar = avatar;
+            if (introVideo) data.intro_video = introVideo;
+            
+            if (Object.keys(data).length === 0) {
+                alert('Please enter at least one field to update');
+                return;
+            }
+
+            makeRequest('PUT', '/users/me', data, 'update-profile-response');
+        }
+
+        // Trip Functions
+        function listTrips() {
+            makeRequest('GET', '/trips/', null, 'trips-list-response');
+        }
+
+        function createTrip() {
+            const origin = document.getElementById('create-trip-origin').value;
+            const destination = document.getElementById('create-trip-destination').value;
+            const depDate = document.getElementById('create-trip-dep-date').value;
+            const depTime = document.getElementById('create-trip-dep-time').value;
+            const arrDate = document.getElementById('create-trip-arr-date').value;
+            const arrTime = document.getElementById('create-trip-arr-time').value;
+            const seats = document.getElementById('create-trip-seats').value;
+            const price = document.getElementById('create-trip-price').value;
+            
+            if (!origin || !destination || !depDate || !depTime || !seats || !price) {
+                alert('Please fill in all required fields');
+                return;
+            }
+            
+            const data = {
+                origin: origin,
+                destination: destination,
+                departure_time: `${depDate}T${depTime}:00`,
+                arrival_time: arrDate && arrTime ? `${arrDate}T${arrTime}:00` : null,
+                seats_total: parseInt(seats),
+                price: parseFloat(price)
+            };
+
+            makeRequest('POST', '/trips/', data, 'create-trip-response');
+        }
+
+        function getTrip() {
+            const tripId = document.getElementById('trip-id').value;
+            if (!tripId) {
+                alert('Please enter a trip ID');
+                return;
+            }
+            makeRequest('GET', `/trips/${tripId}`, null, 'trip-details-response');
+        }
+
+        // Booking Functions
+        function bookTrip() {
+            const tripId = document.getElementById('book-trip-id').value;
+            const seatNumber = document.getElementById('seat-number').value;
+            if (!tripId || !seatNumber) {
+                alert('Please enter trip ID and seat number');
+                return;
+            }
+            makeRequest('POST', `/trips/${tripId}/book`, { seat_number: parseInt(seatNumber) }, 'book-trip-response');
+        }
+
+        function getUserBookings() {
+            makeRequest('GET', '/bookings/', null, 'user-bookings-response');
+        }
+
+        function cancelBooking() {
+            const bookingId = document.getElementById('cancel-booking-id').value;
+            if (!bookingId) {
+                alert('Please enter a booking ID');
+                return;
+            }
+            makeRequest('DELETE', `/bookings/${bookingId}`, null, 'cancel-booking-response');
+        }
+
+        function getTripSeats() {
+            const tripId = document.getElementById('seats-trip-id').value;
+            if (!tripId) {
+                alert('Please enter a trip ID');
+                return;
+            }
+            makeRequest('GET', `/trips/${tripId}/seats`, null, 'trip-seats-response');
+        }
+
+        // Payment Functions
+        function initiatePayment() {
+            const bookingId = document.getElementById('payment-booking-id').value;
+            const paymentMethod = document.getElementById('payment-method').value;
+            if (!bookingId) {
+                alert('Please enter a booking ID');
+                return;
+            }
+            makeRequest('POST', '/payments/initiate', { booking_id: bookingId, payment_method: paymentMethod }, 'initiate-payment-response');
+        }
+
+        function verifyPayment() {
+            const reference = document.getElementById('payment-reference').value;
+            const bookingId = document.getElementById('verify-booking-id').value;
+            if (!reference || !bookingId) {
+                alert('Please enter payment reference and booking ID');
+                return;
+            }
+            makeRequest('POST', '/payments/verify', { reference, booking_id: bookingId }, 'verify-payment-response');
+        }
+
+        function getPaymentHistory() {
+            makeRequest('GET', '/payments/history', null, 'payment-history-response');
+        }
+
+        // Company Functions
+        function companySignup() {
+            const data = {
+                name: document.getElementById('company-contact-name').value,
+                email: document.getElementById('company-contact-email').value,
+                password: document.getElementById('company-signup-password').value,
+                company_name: document.getElementById('company-name').value,
+                company_email: document.getElementById('company-email').value,
+                company_cert: document.getElementById('company-cert').value,
+                accessCode: document.getElementById('company-access-code').value
+            };
+
+            // Check required fields
+            const requiredFields = ['name', 'email', 'password', 'company_name', 'company_email', 'company_cert', 'accessCode'];
+            const missingFields = requiredFields.filter(field => !data[field]);
+            
+            if (missingFields.length > 0) {
+                alert(`Please fill in all required fields: ${missingFields.join(', ')}`);
+                return;
+            }
+
+            makeRequest('POST', '/company/signup', data, 'company-signup-response');
+        }
+
+        function companyLogin() {
+            const email = document.getElementById('company-login-email').value;
+            const password = document.getElementById('company-login-password').value;
+            if (!email || !password) {
+                alert('Please enter email and password');
+                return;
+            }
+            makeRequest('POST', '/company/login', { email, password }, 'company-login-response');
+        }
+
+        function getCompanyProfile() {
+            makeRequest('GET', '/company/me', null, 'company-profile-response');
+        }
+
+        function addVehicle() {
+            const vehicleType = document.getElementById('vehicle-type').value;
+            const capacity = document.getElementById('vehicle-capacity').value;
+            
+            if (!vehicleType || !capacity) {
+                alert('Please fill in vehicle type and capacity');
+                return;
+            }
+            
+            // Get selected features
+            const features = [];
+            document.querySelectorAll('.checkbox-group input[type="checkbox"]:checked').forEach(checkbox => {
+                features.push(checkbox.value);
+            });
+            
+            const data = {
+                type: vehicleType,
+                capacity: parseInt(capacity),
+                features: features.join(', ')
+            };
+
+            makeRequest('POST', '/company/vehicles', data, 'vehicle-response');
+        }
+
+        // Utility Functions
+        function fillSampleUser() {
+            // Fill authentication fields
+            document.getElementById('otp-email').value = 'john@example.com';
+            document.getElementById('verify-email').value = 'john@example.com';
+            document.getElementById('login-email').value = 'john@example.com';
+            document.getElementById('login-password').value = 'password123';
+            
+            // Fill registration form
+            document.getElementById('register-first-name').value = 'John';
+            document.getElementById('register-last-name').value = 'Doe';
+            document.getElementById('register-nickname').value = 'johndoe';
+            document.getElementById('register-email').value = 'john@example.com';
+            document.getElementById('register-password').value = 'password123';
+            document.getElementById('register-phone').value = '+234123456789';
+            document.getElementById('register-bio').value = 'Travel enthusiast and adventurer';
+            document.getElementById('register-profile-pic').value = 'https://via.placeholder.com/150';
+            document.getElementById('register-intro-video').value = 'https://example.com/intro.mp4';
+            
+            // Fill trip creation form
+            document.getElementById('create-trip-origin').value = 'Lagos';
+            document.getElementById('create-trip-destination').value = 'Abuja';
+            document.getElementById('create-trip-seats').value = '40';
+            document.getElementById('create-trip-price').value = '15000';
+        }
+
+        function fillSampleCompany() {
+            // Fill company login fields
+            document.getElementById('company-login-email').value = 'admin@odysstransport.com';
+            document.getElementById('company-login-password').value = 'password123';
+            
+            // Fill company signup form
+            document.getElementById('company-contact-name').value = 'John Doe';
+            document.getElementById('company-contact-email').value = 'admin@odysstransport.com';
+            document.getElementById('company-signup-password').value = 'password123';
+            document.getElementById('company-access-code').value = 'COMPANY_ACCESS_CODE_FROM_ENV';
+            document.getElementById('company-name').value = 'Odyss Transport Ltd';
+            document.getElementById('company-email').value = 'info@odysstransport.com';
+            document.getElementById('company-cert').value = 'base64-encoded-certificate-data-here';
+            
+            // Fill vehicle form
+            document.getElementById('vehicle-capacity').value = '40';
+            document.getElementById('feature-ac').checked = true;
+            document.getElementById('feature-wifi').checked = true;
+            document.getElementById('feature-charging').checked = true;
+        }
+
+        function clearAllTokens() {
+            authToken = '';
+            document.getElementById('authToken').value = '';
+            updateAuthStatus();
+        }
+
+        // Initialize
+        updateAuthStatus();
+    </script>
+</body>
+</html>
