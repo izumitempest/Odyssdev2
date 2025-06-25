@@ -1,5 +1,5 @@
 # __init__.py
-from flask import Flask
+from flask import Flask, request
 from app.config import Config
 from app.extensions import db, jwt, migrate, cors
 from app.auth.routes import auth_bp
@@ -24,7 +24,7 @@ load_dotenv()  # Load environment variables from .env file
 
 def create_app():
     app = Flask(__name__)
-    CORS(app)
+    CORS(app, origins=["http://localhost:5174", "https://server.odyss.ng"])
     app.config["JWT_SECRET_KEY"] = os.getenv("SECRET_KEY")
     app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=1)
     app.config["JWT_REFRESH_TOKEN_EXPIRES"] = timedelta(days=7)
@@ -44,7 +44,15 @@ def create_app():
 
     @app.after_request
     def apply_cors(response):
-        response.headers["Access-Control-Allow-Origin"] = "*"
+        allowed_origins = [
+            "http://localhost:5174",
+            "https://server.odyss.ng"
+        ]
+        origin = request.headers.get("Origin")
+        if origin in allowed_origins:
+            response.headers["Access-Control-Allow-Origin"] = origin
+        else:
+            response.headers["Access-Control-Allow-Origin"] = "http://localhost:5174"
         response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
         response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
         return response
