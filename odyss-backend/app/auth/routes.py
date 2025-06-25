@@ -92,9 +92,56 @@ def login():
     return jsonify(tokens), 200
 
 
-@auth_bp.route("/token/refresh", methods=["POST"])
-@jwt_required(refresh=True)
-def refresh_token():
-    identity = get_jwt_identity()
-    new_token = generate_tokens(identity)
-    return jsonify(new_token), 200
+
+
+@auth_bp.route("/logout", methods=["POST"])
+@jwt_required()
+def logout():
+    # In stateless JWT, logout is typically handled client-side
+    # But you can implement token blacklisting if needed
+    return jsonify({"message": "Logged out successfully"}), 200
+
+
+@auth_bp.route("/request-otp", methods=["POST"])
+def request_otp():
+    data = request.get_json()
+    email = data.get("email")
+    
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+    
+    # TODO: Implement OTP generation and sending logic
+    # For now, return success
+    return jsonify({"message": "OTP sent successfully"}), 200
+
+
+@auth_bp.route("/verify-otp", methods=["POST"])
+def verify_otp():
+    data = request.get_json()
+    email = data.get("email")
+    otp = data.get("otp")
+    
+    # TODO: Implement OTP verification logic
+    # For now, return success for demonstration
+    return jsonify({"message": "OTP verified successfully"}), 200
+
+
+@auth_bp.route("/reset-password", methods=["POST"])
+def reset_password():
+    data = request.get_json()
+    email = data.get("email")
+    new_password = data.get("new_password")
+    otp = data.get("otp")  # or token
+    
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+    
+    # TODO: Verify OTP/token before resetting
+    user.password_hash = hash_password(new_password)
+    db.session.commit()
+    
+    return jsonify({"message": "Password reset successfully"}), 200
+
+# Fix the refresh token route
