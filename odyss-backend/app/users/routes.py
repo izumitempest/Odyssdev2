@@ -24,6 +24,8 @@ def get_my_profile():
     "name": user.name,
     "first_name": user.first_name,
     "last_name": user.last_name,
+    "date_of_birth": user.date_of_birth.isoformat() if user.date_of_birth else None,
+    "vibes": user.vibes if user.vibes else [],
     "nickname": user.name,
     "bio": user.bio,
     "phone_number": user.phone_number,
