@@ -130,7 +130,7 @@ def request_otp():
 def register():
     data = request.get_json()
     
-    required_fields = ["first_name", "last_name", "nickname", "email", "password", "bio", "phone_number", "profile_pic", "intro_video"]
+    required_fields = ["first_name", "last_name", "nickname", "email", "password", "bio", "phone_number", "profile_pic", "intro_video", "date_of_birth", "vibes"]
     if not all(field in data and data[field] for field in required_fields):
         return jsonify({"error": "Missing required fields"}), 400
 
@@ -162,6 +162,8 @@ def register():
         phone_number=data["phone_number"],
         avatar=data["profile_pic"],
         intro_video=data["intro_video"],
+        date_of_birth=data["date_of_birth"],
+        vibes=data["vibes"],
         role=role
     )
 
