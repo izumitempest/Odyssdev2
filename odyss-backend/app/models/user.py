@@ -23,7 +23,10 @@ class User(db.Model):
     phone_number = db.Column(db.String(20), nullable=False)
     bio = db.Column(db.Text, nullable=True)
     intro_video = db.Column(db.Text, nullable=True)
-
+    #add for date of birth
+    date_of_birth = db.Column(db.Date, nullable=True)
+    #a list named vibes
+    vibes = db.Column(db.ARRAY(db.String), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     oauth_identities = relationship("OAuthIdentity", back_populates="user", cascade="all, delete-orphan")
