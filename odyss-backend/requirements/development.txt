@@ -1,0 +1,20 @@
+# Include base requirements
+-r base.txt
+
+# Development and debugging
+Flask-DebugToolbar==0.13.1
+ipdb==0.13.13
+
+# Testing
+pytest==7.4.0
+pytest-flask==1.2.0
+pytest-cov==4.1.0
+factory-boy==3.3.0
+
+# Code quality
+flake8==6.0.0
+black==23.7.0
+isort==5.12.0
+
+# Development server
+watchdog==3.0.0

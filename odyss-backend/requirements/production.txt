@@ -1,0 +1,14 @@
+# Include base requirements
+-r base.txt
+
+# Production server
+gunicorn==21.2.0
+
+# Production utilities
+sentry-sdk==1.32.0
+
+# Performance monitoring
+newrelic==8.10.0
+
+# Security
+cryptography==41.0.4

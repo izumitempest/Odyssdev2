@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Odyss Backend API Test UI</title>
+  <style>
+    body { font-family: sans-serif; margin: 2rem; }
+    input, button, select, textarea { margin: 0.3rem 0; width: 100%; }
+    section { margin-bottom: 2.5rem; border-bottom: 1px solid #ccc; padding-bottom: 1rem; }
+    label { font-weight: bold; }
+    .res { background: #f4f4f4; padding: 0.5rem; white-space: pre-wrap; border: 1px solid #eee; min-height: 1.5em;}
+    .token-area {word-break: break-all; font-size: 0.95em; color: #2d5;}
+    .hidden {display:none;}
+    h2 { margin-top: 2rem; }
+  </style>
+</head>
+<body>
+
+  <h1>Odyss Backend API Interactive Tester</h1>
+  <small>All requests go to <b>http://localhost:5000</b>. Make sure your backend is running! Copy/paste tokens as needed for company/user flows.</small>
+
+  <!-- Auth Section -->
+  <section>
+    <h2>Authentication</h2>
+    <label>Email: <input type="email" id="auth-email" value="izumi@test.com"></label>
+    <label>Password: <input type="password" id="auth-password" value="not_really_hashed"></label>
+    <button onclick="login()">Login</button>
+    <button onclick="register()">Register</button>
+    <button onclick="logout()">Logout</button>
+    <button onclick="refreshToken()">Refresh Token</button>
+    <div class="token-area" id="jwt-area"></div>
+    <div id="auth-result" class="res"></div>
+    <h3>Password & OTP</h3>
+    <button onclick="requestOTP()">Request OTP</button>
+    <label>OTP: <input id="otp-code"></label>
+    <button onclick="verifyOTP()">Verify OTP</button>
+    <label>Forgot Password Email: <input id="forgot-email"></label>
+    <button onclick="forgotPassword()">Forgot Password</button>
+    <label>New Password: <input id="reset-newpw"></label>
+    <button onclick="resetPassword()">Reset Password</button>
+    <label>Change Password: <input id="change-newpw"></label>
+    <button onclick="changePassword()">Change Password</button>
+    <div id="otp-result" class="res"></div>
+    <h3>Google OAuth</h3>
+    <label>Google Token: <input id="google-token"></label>
+    <button onclick="googleOAuth()">Google OAuth</button>
+    <div id="google-result" class="res"></div>
+  </section>
+
+  <!-- User Profile -->
+  <section>
+    <h2>User Profile</h2>
+    <button onclick="getMyProfile()">GET /users/me</button>
+    <div id="profile-result" class="res"></div>
+    <label>Update profile (send only filled fields):</label>
+    <input placeholder="name" id="user-name">
+    <input placeholder="avatar" id="user-avatar">
+    <input placeholder="bio" id="user-bio">
+    <input placeholder="intro_video" id="user-intro">
+    <input placeholder="phone_number" id="user-phone">
+    <button onclick="updateMyProfile()">PUT /users/me</button>
+    <div id="update-profile-result" class="res"></div>
+  </section>
+
+  <!-- Trips -->
+  <section>
+    <h2>Trips</h2>
+    <button onclick="listTrips()">GET /trips/</button>
+    <input placeholder="trip_id" id="trip-id">
+    <button onclick="getTrip()">GET /trips/&lt;trip_id&gt;</button>
+    <div id="trips-result" class="res"></div>
+    <label>Create Trip (JSON): <textarea id="trip-create-body" rows="3">{ "origin": "", "destination": "", "departure_time": "", "seats_total": 40, "price": 100 }</textarea></label>
+    <button onclick="createTrip()">POST /trips/</button>
+    <div id="trip-create-result" class="res"></div>
+  </section>
+
+  <!-- Bookings -->
+  <section>
+    <h2>Bookings</h2>
+    <button onclick="getUserBookings()">GET /bookings/</button>
+    <input placeholder="trip_id" id="booking-trip-id">
+    <button onclick="getTripSeats()">GET /trips/&lt;trip_id&gt;/seats</button>
+    <button onclick="getTripPassengers()">GET /bookings/&lt;trip_id&gt;/passengers</button>
+    <input placeholder="trip_id" id="book-trip-id">
+    <button onclick="bookTrip()">POST /trips/&lt;trip_id&gt;/book</button>
+    <input placeholder="booking_id" id="cancel-booking-id">
+    <button onclick="cancelBooking()">DELETE /bookings/&lt;booking_id&gt;</button>
+    <div id="bookings-result" class="res"></div>
+  </section>
+
+  <!-- Company Section -->
+  <section>
+    <h2>Company</h2>
+    <label>Company Email: <input id="company-email"></label>
+    <label>Password: <input id="company-password"></label>
+    <button onclick="companySignup()">Signup</button>
+    <button onclick="companyLogin()">Login</button>
+    <div id="company-jwt-area" class="token-area"></div>
+    <button onclick="getCompanyProfile()">GET /company/me</button>
+    <button onclick="listCompanyTrips()">GET /company/trips</button>
+    <button onclick="getAllCompanyBookings()">GET /company/bookings</button>
+    <label>Create Vehicle (JSON): <textarea id="vehicle-create" rows="2">{ "license_plate": "", "model": "" }</textarea></label>
+    <button onclick="addVehicle()">POST /company/vehicles</button>
+    <label>Create Route (JSON): <textarea id="route-create" rows="2">{ "origin": "", "destination": "" }</textarea></label>
+    <button onclick="createRoute()">POST /company/routes</button>
+    <label>Create Trip (JSON): <textarea id="company-trip-create" rows="3">{ "origin": "", "destination": "", "departure_time": "", "seats_total": 40, "price": 100 }</textarea></label>
+    <button onclick="companyCreateTrip()">POST /company/trips</button>
+    <input placeholder="trip_id" id="company-trip-id">
+    <label>Update Trip (PATCH JSON): <textarea id="company-trip-update" rows="2">{ "price": 120 }</textarea></label>
+    <button onclick="updateCompanyTrip()">PATCH /company/trips/&lt;trip_id&gt;</button>
+    <button onclick="deleteCompanyTrip()">DELETE /company/trips/&lt;trip_id&gt;</button>
+    <div id="company-result" class="res"></div>
+  </section>
+
+  <!-- Payments -->
+  <section>
+    <h2>Payments</h2>
+    <label>Initiate Payment (JSON): <textarea id="payment-init" rows="2">{ "amount": 1000, "trip_id": "" }</textarea></label>
+    <button onclick="initiatePayment()">POST /payments/initiate</button>
+    <button onclick="paymentHistory()">GET /payments/history</button>
+    <label>Verify Payment (JSON): <textarea id="payment-verify" rows="2">{ "reference": "" }</textarea></label>
+    <button onclick="verifyPayment()">POST /payments/verify</button>
+    <div id="payments-result" class="res"></div>
+  </section>
+
+  <script>
+    // Base URL for the backend server
+    const BASE_URL = "http://localhost:5000";
+
+    // User token
+    let jwt = "";
+    // Company token (if separate)
+    let companyJwt = "";
+
+    function showResult(id, data) {
+      document.getElementById(id).textContent = (typeof data === "string") ? data : JSON.stringify(data, null, 2);
+    }
+    function setJwt(token) {
+      jwt = token; document.getElementById("jwt-area").textContent = "JWT: " + jwt;
+    }
+    function setCompanyJwt(token) {
+      companyJwt = token; document.getElementById("company-jwt-area").textContent = "Company JWT: " + companyJwt;
+    }
+
+    // --- Helper for fetch with base URL ---
+    function apiFetch(path, options={}) {
+      return fetch(BASE_URL + path, options);
+    }
+
+    // --- Auth Functions ---
+    function login() {
+      apiFetch('/auth/login', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ email: document.getElementById('auth-email').value, password: document.getElementById('auth-password').value })
+      })
+      .then(r => r.json()).then(data => {
+        showResult('auth-result', data);
+        if(data.access_token) setJwt(data.access_token);
+      });
+    }
+    function register() {
+      apiFetch('/auth/register', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ email: document.getElementById('auth-email').value, password: document.getElementById('auth-password').value })
+      })
+      .then(r => r.json()).then(data => showResult('auth-result', data));
+    }
+    function logout() {
+      apiFetch('/auth/logout', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + jwt }
+      })
+      .then(r => r.json()).then(data => showResult('auth-result', data));
+    }
+    function refreshToken() {
+      apiFetch('/auth/token/refresh', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + jwt }
+      })
+      .then(r => r.json()).then(data => { showResult('auth-result', data); if(data.access_token) setJwt(data.access_token); });
+    }
+    function requestOTP() {
+      apiFetch('/auth/request-otp', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ email: document.getElementById('auth-email').value })
+      })
+      .then(r => r.json()).then(data => showResult('otp-result', data));
+    }
+    function verifyOTP() {
+      apiFetch('/auth/verify-otp', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ email: document.getElementById('auth-email').value, otp: document.getElementById('otp-code').value })
+      })
+      .then(r => r.json()).then(data => showResult('otp-result', data));
+    }
+    function forgotPassword() {
+      apiFetch('/auth/forgot-password', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ email: document.getElementById('forgot-email').value })
+      })
+      .then(r => r.json()).then(data => showResult('otp-result', data));
+    }
+    function resetPassword() {
+      apiFetch('/auth/reset-password', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ email: document.getElementById('auth-email').value, new_password: document.getElementById('reset-newpw').value })
+      })
+      .then(r => r.json()).then(data => showResult('otp-result', data));
+    }
+    function changePassword() {
+      apiFetch('/auth/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + jwt },
+        body: JSON.stringify({ new_password: document.getElementById('change-newpw').value })
+      })
+      .then(r => r.json()).then(data => showResult('otp-result', data));
+    }
+    function googleOAuth() {
+      apiFetch('/auth/oauth/google', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ token: document.getElementById('google-token').value })
+      })
+      .then(r => r.json()).then(data => showResult('google-result', data));
+    }
+
+    // --- User Profile ---
+    function getMyProfile() {
+      apiFetch('/users/me', {
+        headers: { Authorization: 'Bearer ' + jwt }
+      })
+      .then(r => r.json()).then(data => showResult('profile-result', data));
+    }
+    function updateMyProfile() {
+      const body = {};
+      if(document.getElementById('user-name').value) body.name = document.getElementById('user-name').value;
+      if(document.getElementById('user-avatar').value) body.avatar = document.getElementById('user-avatar').value;
+      if(document.getElementById('user-bio').value) body.bio = document.getElementById('user-bio').value;
+      if(document.getElementById('user-intro').value) body.intro_video = document.getElementById('user-intro').value;
+      if(document.getElementById('user-phone').value) body.phone_number = document.getElementById('user-phone').value;
+      apiFetch('/users/me', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + jwt },
+        body: JSON.stringify(body)
+      })
+      .then(r => r.json()).then(data => showResult('update-profile-result', data));
+    }
+
+    // --- Trips ---
+    function listTrips() {
+      apiFetch('/trips/', { headers: { Authorization: 'Bearer ' + jwt } })
+      .then(r => r.json()).then(data => showResult('trips-result', data));
+    }
+    function getTrip() {
+      apiFetch('/trips/' + document.getElementById('trip-id').value, { headers: { Authorization: 'Bearer ' + jwt } })
+      .then(r => r.json()).then(data => showResult('trips-result', data));
+    }
+    function createTrip() {
+      apiFetch('/trips/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + jwt },
+        body: document.getElementById('trip-create-body').value
+      })
+      .then(r => r.json()).then(data => showResult('trip-create-result', data));
+    }
+
+    // --- Bookings ---
+    function getUserBookings() {
+      apiFetch('/bookings/', { headers: { Authorization: 'Bearer ' + jwt } })
+      .then(r => r.json()).then(data => showResult('bookings-result', data));
+    }
+    function getTripSeats() {
+      apiFetch('/trips/' + document.getElementById('booking-trip-id').value + '/seats', { headers: { Authorization: 'Bearer ' + jwt } })
+      .then(r => r.json()).then(data => showResult('bookings-result', data));
+    }
+    function getTripPassengers() {
+      apiFetch('/bookings/' + document.getElementById('booking-trip-id').value + '/passengers', { headers: { Authorization: 'Bearer ' + jwt } })
+      .then(r => r.json()).then(data => showResult('bookings-result', data));
+    }
+    function bookTrip() {
+      apiFetch('/trips/' + document.getElementById('book-trip-id').value + '/book', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + jwt }
+      })
+      .then(r => r.json()).then(data => showResult('bookings-result', data));
+    }
+    function cancelBooking() {
+      apiFetch('/bookings/' + document.getElementById('cancel-booking-id').value, {
+        method: 'DELETE',
+        headers: { Authorization: 'Bearer ' + jwt }
+      })
+      .then(r => r.json()).then(data => showResult('bookings-result', data));
+    }
+
+    // --- Company ---
+    function companySignup() {
+      apiFetch('/company/signup', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ email: document.getElementById('company-email').value, password: document.getElementById('company-password').value })
+      })
+      .then(r => r.json()).then(data => showResult('company-result', data));
+    }
+    function companyLogin() {
+      apiFetch('/company/login', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ email: document.getElementById('company-email').value, password: document.getElementById('company-password').value })
+      })
+      .then(r => r.json()).then(data => {
+        showResult('company-result', data);
+        if(data.access_token) setCompanyJwt(data.access_token);
+      });
+    }
+    function getCompanyProfile() {
+      apiFetch('/company/me', { headers: { Authorization: 'Bearer ' + companyJwt } })
+      .then(r => r.json()).then(data => showResult('company-result', data));
+    }
+    function listCompanyTrips() {
+      apiFetch('/company/trips', { headers: { Authorization: 'Bearer ' + companyJwt } })
+      .then(r => r.json()).then(data => showResult('company-result', data));
+    }
+    function getAllCompanyBookings() {
+      apiFetch('/company/bookings', { headers: { Authorization: 'Bearer ' + companyJwt } })
+      .then(r => r.json()).then(data => showResult('company-result', data));
+    }
+    function addVehicle() {
+      apiFetch('/company/vehicles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + companyJwt },
+        body: document.getElementById('vehicle-create').value
+      })
+      .then(r => r.json()).then(data => showResult('company-result', data));
+    }
+    function createRoute() {
+      apiFetch('/company/routes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + companyJwt },
+        body: document.getElementById('route-create').value
+      })
+      .then(r => r.json()).then(data => showResult('company-result', data));
+    }
+    function companyCreateTrip() {
+      apiFetch('/company/trips', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + companyJwt },
+        body: document.getElementById('company-trip-create').value
+      })
+      .then(r => r.json()).then(data => showResult('company-result', data));
+    }
+    function updateCompanyTrip() {
+      apiFetch('/company/trips/' + document.getElementById('company-trip-id').value, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + companyJwt },
+        body: document.getElementById('company-trip-update').value
+      })
+      .then(r => r.json()).then(data => showResult('company-result', data));
+    }
+    function deleteCompanyTrip() {
+      apiFetch('/company/trips/' + document.getElementById('company-trip-id').value, {
+        method: 'DELETE',
+        headers: { Authorization: 'Bearer ' + companyJwt }
+      })
+      .then(r => r.json()).then(data => showResult('company-result', data));
+    }
+
+    // --- Payments ---
+    function initiatePayment() {
+      apiFetch('/payments/initiate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + jwt },
+        body: document.getElementById('payment-init').value
+      })
+      .then(r => r.json()).then(data => showResult('payments-result', data));
+    }
+    function paymentHistory() {
+      apiFetch('/payments/history', { headers: { Authorization: 'Bearer ' + jwt } })
+      .then(r => r.json()).then(data => showResult('payments-result', data));
+    }
+    function verifyPayment() {
+      apiFetch('/payments/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + jwt },
+        body: document.getElementById('payment-verify').value
+      })
+      .then(r => r.json()).then(data => showResult('payments-result', data));
+    }
+  </script>
+</body>
+</html>
