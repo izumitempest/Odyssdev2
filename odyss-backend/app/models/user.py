@@ -22,11 +22,11 @@ class User(db.Model):
     last_name = db.Column(db.String(100), nullable=False)
     phone_number = db.Column(db.String(20), nullable=False)
     bio = db.Column(db.Text, nullable=True)
-    intro_video = db.Column(db.Text, nullable=True)
+    intro_video = db.Column(db.Text, nullable=False)
     #add for date of birth
-    date_of_birth = db.Column(db.Date, nullable=True)
+    date_of_birth = db.Column(db.Date, nullable=False)
     #a list named vibes
-    vibes = db.Column(db.ARRAY(db.String), nullable=True)
+    vibes = db.Column(db.ARRAY(db.String), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     oauth_identities = relationship("OAuthIdentity", back_populates="user", cascade="all, delete-orphan")

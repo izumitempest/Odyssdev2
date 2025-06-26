@@ -77,7 +77,7 @@ def company_login():
     access_token = create_access_token(
         identity=str(company.id),
         additional_claims={"role": "company", "email": company.email},
-        expires_delta=datetime.timedelta(hours=1)
+        expires_delta=datetime.timedelta(seconds)
     )
     refresh_token = create_refresh_token(identity=str(company.id))
 
