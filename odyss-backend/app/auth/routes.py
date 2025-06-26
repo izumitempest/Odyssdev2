@@ -25,11 +25,21 @@ from app.models.email_otp import EmailOTP
 from app.extensions import db
 from flask import request, jsonify
 from app.models.blacklist import TokenBlacklist
+from supabase import create_client, Client
+import os
+from dotenv import load_dotenv
 
+# Load environment variables
+load_dotenv()
 # In-memory store for OTPs (for development/testing only)
-
-
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
+
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+
+if not SUPABASE_URL or not SUPABASE_KEY:
+    raise RuntimeError("SUPABASE_URL and SUPABASE_KEY environment variables must be set")
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 
 @auth_bp.route("/oauth/google", methods=["POST"])
@@ -129,12 +139,16 @@ def request_otp():
 @auth_bp.route("/register", methods=["POST"])
 def register():
     data = request.get_json()
-    
-    required_fields = ["first_name", "last_name", "nickname", "email", "password", "bio", "phone_number", "profile_pic", "intro_video", "date_of_birth", "vibes"]
+
+    required_fields = ["first_name", "last_name", "nickname", "email", "password", "bio", "phone_number", "profile_pic", "intro_video", "date_of_birth", "vibes", "access_code"]
     if not all(field in data and data[field] for field in required_fields):
         return jsonify({"error": "Missing required fields"}), 400
 
+    access_code = data.get("access_code")
     email = data["email"]
+
+    if not is_access_code_valid(email, access_code):
+        return jsonify({"error": "Invalid or unauthorized access code"}), 400
 
     # Check OTP (must NOT exist if deleted on verification)
     if EmailOTP.query.filter_by(email=email).first():
@@ -169,6 +183,8 @@ def register():
 
     db.session.add(user)
     db.session.commit()
+
+    mark_access_code_as_used(email, access_code)
 
     return jsonify({"message": "User registered successfully"}), 201
 
@@ -314,4 +330,13 @@ def reset_password():
     db.session.commit()
 
     return jsonify({"message": "Password reset successfully"}), 200
+
+def is_access_code_valid(email, access_code):
+    # Adjust table/column names as per your Supabase schema
+    response = supabase.table("Waitlist").select("*").eq("email", email).eq("promo_code", access_code).eq("used", False).execute()
+    return len(response.data) > 0
+
+def mark_access_code_as_used(email, access_code):
+    # Mark the code as used
+    supabase.table("Waitlist").update({"used": True}).eq("email", email).eq("promo_code", access_code).execute()
 
