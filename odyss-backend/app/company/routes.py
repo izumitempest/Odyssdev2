@@ -77,7 +77,7 @@ def company_login():
     access_token = create_access_token(
         identity=str(company.id),
         additional_claims={"role": "company", "email": company.email},
-        expires_delta=datetime.timedelta(seconds)
+        expires_delta=datetime.timedelta(hours=1)
     )
     refresh_token = create_refresh_token(identity=str(company.id))
 
@@ -340,6 +340,58 @@ def get_all_company_bookings():
             "created_at": booking.created_at.isoformat()
         })
 
+    return jsonify(result), 200
+
+from flask_jwt_extended import jwt_required, get_jwt_identity, create_access_token
+
+@company_bp.route("/token/refresh", methods=["POST"])
+@jwt_required(refresh=True)
+def company_token_refresh():
+    company_id = get_jwt_identity()
+    company = Company.query.get(company_id)
+    if not company:
+        return jsonify({"error": "Company not found"}), 404
+
+    access_token = create_access_token(
+        identity=str(company.id),
+        additional_claims={"role": "company", "email": company.email},
+        expires_delta=datetime.timedelta(hours=1)
+    )
+    return jsonify({"access_token": access_token}), 200
+
+@company_bp.route("/vehicles", methods=["GET"])
+@jwt_required()
+@role_required("company")
+def get_vehicles():
+    company_id = get_jwt_identity()
+    vehicles = Vehicle.query.filter_by(company_id=company_id).all()
+    result = []
+    for vehicle in vehicles:
+        result.append({
+            "id": str(vehicle.id),
+            "type": vehicle.type,
+            "capacity": vehicle.capacity,
+            "features": vehicle.features
+        })
+    return jsonify(result), 200
+
+@company_bp.route("/routes", methods=["GET"])
+@jwt_required()
+@role_required("company")
+def get_routes():
+    company_id = get_jwt_identity()
+    routes = Route.query.filter_by(company_id=company_id).all()
+    result = []
+    for route in routes:
+        result.append({
+            "id": str(route.id),
+            "origin": route.origin,
+            "destination": route.destination,
+            "dep_time": route.dep_time.isoformat() if hasattr(route.dep_time, "isoformat") else route.dep_time,
+            "price": route.price,
+            "terminal": route.terminal,
+            "vehicles": route.vehicles
+        })
     return jsonify(result), 200
 
 

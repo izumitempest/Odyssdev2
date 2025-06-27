@@ -159,7 +159,7 @@ def register():
         return jsonify({"error": "Email already registered"}), 400
 
     # Fetch or create the default "user" role
-    role = Role.query.filter_by(name="user").first()
+    role = Role.query.filter_by(name="user").first() 
     if not role:
         role = Role(name="user")
         db.session.add(role)
@@ -178,6 +178,7 @@ def register():
         intro_video=data["intro_video"],
         date_of_birth=data["date_of_birth"],
         vibes=data["vibes"],
+        access_code=data["access_code"],  # Assuming access_code is provided #
         role=role
     )
 
@@ -336,7 +337,11 @@ def is_access_code_valid(email, access_code):
     response = supabase.table("Waitlist").select("*").eq("email", email).eq("promo_code", access_code).eq("used", False).execute()
     return len(response.data) > 0
 
+from datetime import datetime
+
 def mark_access_code_as_used(email, access_code):
-    # Mark the code as used
-    supabase.table("Waitlist").update({"used": True}).eq("email", email).eq("promo_code", access_code).execute()
+    supabase.table("Waitlist").update({
+        "used": True,
+        "used_at": datetime.utcnow().isoformat()
+    }).eq("email", email).eq("promo_code", access_code).execute()
 

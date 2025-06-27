@@ -12,5 +12,5 @@ class Route(db.Model):
     destination = db.Column(db.String(100))
     dep_time = db.Column(db.DateTime)
     price = db.Column(db.Float)
-    terminal = db.Column(db.JSON)
+    terminal = db.Column(db.String(100))
     vehicles = db.Column(db.JSON)

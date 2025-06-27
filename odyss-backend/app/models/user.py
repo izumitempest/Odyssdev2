@@ -28,6 +28,7 @@ class User(db.Model):
     #a list named vibes
     vibes = db.Column(db.ARRAY(db.String), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    access_code = db.Column(db.String(120), nullable=False, unique=True)
 
     oauth_identities = relationship("OAuthIdentity", back_populates="user", cascade="all, delete-orphan")
 
