@@ -58,3 +58,13 @@ def cancel_booking(booking_id: UUID, user_id: UUID) -> None:
 def get_taken_seats(trip_id: UUID) -> List[int]:
     bookings = Booking.query.filter_by(trip_id=trip_id).all()
     return [b.seat_number for b in bookings if b.status != "cancelled"]
+
+# from app.notifications.services import send_notification
+
+# # After booking is created
+# send_notification(
+#     type="email",  # or "sms"
+#     recipient=User.email,
+#     subject="Booking Confirmed!",
+#     # message=f"Your booking for the trip from {Trip.route.origin} to {Trip.route.destination} has been confirmed."
+# )

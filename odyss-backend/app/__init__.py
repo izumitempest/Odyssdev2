@@ -10,12 +10,15 @@ from app.bookings.routes import bookings_bp
 from app.bookings.routes import booking_bp
 from app.payments.routes import payments_bp
 from app.company.routes import company_bp
+from app.admin.dashboard import admin_dashboard_bp
+from app.admin import register_admin_routes
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 import os
 from datetime import timedelta
 from dotenv import load_dotenv
 from app.models.blacklist import TokenBlacklist
+from app.notifications.routes import notifications_bp
 load_dotenv()  # Load environment variables from .env file
 
 
@@ -37,6 +40,9 @@ def create_app():
     app.register_blueprint(booking_bp)
     app.register_blueprint(payments_bp)
     app.register_blueprint(company_bp)
+    app.register_blueprint(admin_dashboard_bp)
+    app.register_blueprint(notifications_bp, url_prefix="/notifications")
+
 
     # app.register_blueprint(companies_bp)
 
@@ -53,10 +59,10 @@ def create_app():
             response.headers["Access-Control-Allow-Origin"] = origin
         else:
             response.headers["Access-Control-Allow-Origin"] = "http://localhost:5174"
-        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
-        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
-        response.headers["Access-Control-Allow-Credentials"] = "true"
-        response.headers["Content-Type"] = "application/json"
+            response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+            response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+            response.headers["Access-Control-Allow-Credentials"] = "true"
+            response.headers["Content-Type"] = "application/json"
         return response
 
 

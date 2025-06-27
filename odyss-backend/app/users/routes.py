@@ -68,6 +68,15 @@ def update_my_profile():
             "name": user.name,
             "id": user.id,
             "avatar": user.avatar,
-            "created_at": user.created_at.isoformat()
+            "created_at": user.created_at.isoformat(),
+            "phone_number": user.phone_number,
+            "bio": user.bio,
+            "intro_video": user.intro_video,
+            "role": user.role.name if user.role else None,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "date_of_birth": user.date_of_birth.isoformat() if user.date_of_birth else None,
+            "vibes": user.vibes if user.vibes else [],
+            "nickname": user.name
         }
     }), 200

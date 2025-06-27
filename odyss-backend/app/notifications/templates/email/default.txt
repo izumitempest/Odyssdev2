@@ -1,0 +1,6 @@
+Subject: {{ subject }}
+
+{{ message }}
+
+Regards,  
+Odyss Team

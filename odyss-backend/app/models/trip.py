@@ -16,7 +16,9 @@ class Trip(db.Model):
     seats_total = db.Column(db.Integer, nullable=False)
     seats_available = db.Column(db.Integer, nullable=False)
     price = db.Column(db.Float, nullable=False)
-
+    transport_partner = db.Column(db.String(120), nullable=False)
+    status = db.Column(db.String(50), default="active")  # e.g., "active", "cancelled", "completed"
+    description = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
